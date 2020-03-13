@@ -104,6 +104,17 @@ class _TestPageState extends State<TestPage> {
   void _updateLabelsEnd(int newFirstTime, int newSecondTime, int newThirdTime,
       int newFourthTime) {
     timeToPrint = '';
+    // T3 => first-second & third-fourth
+    // T2 => second-third
+    // T1 => fourth-first
+    int t3 = 21;
+    int t2 = 18;
+    int t1 = 15;
+    /*for(int i = newFirstTime; _isIncluded(i, newFirstTime, newSecondTime); (i++)%96){
+      print(formatIntervalTime(i, i+1) + ': $t3 °C');
+    }*/
+    print('Funziono');
+
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -111,6 +122,14 @@ class _TestPageState extends State<TestPage> {
       thirdTime = newThirdTime;
       fourthTime = newFourthTime;
     });
+  }
+
+  bool _isIncluded(int value, int prev, int succ){
+    if (succ < prev) {
+      if (succ == 0) return value >= prev && value >= succ;
+      return (value >= prev && value >= succ) || (value <= prev && value <= succ);
+    }
+    return value >= prev && value <= succ;
   }
 
   @override
