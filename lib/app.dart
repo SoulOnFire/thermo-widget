@@ -110,10 +110,26 @@ class _TestPageState extends State<TestPage> {
     int t3 = 21;
     int t2 = 18;
     int t1 = 15;
-    /*for(int i = newFirstTime; _isIncluded(i, newFirstTime, newSecondTime); (i++)%96){
-      print(formatIntervalTime(i, i+1) + ': $t3 °C');
-    }*/
-    print('Funziono');
+    print('*** First section ***');
+    for(int i = newFirstTime; _isIncluded(i, newFirstTime, (newSecondTime-1)%96); i = (++i)%96){
+      //print("$i $newSecondTime");
+      print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
+    }
+    print('*** Second section ***');
+    for(int i = newSecondTime; _isIncluded(i, newSecondTime, (newThirdTime-1)%96); i = (++i)%96){
+      //print("$i $newThirdTime");
+      print(formatIntervalTime(i, (i+1)%96) + ': $t2 °C');
+    }
+    print('*** Third section ***');
+    for(int i = newThirdTime; _isIncluded(i, newThirdTime, (newFourthTime-1)%96); i = (++i)%96){
+      //print("$i $newFourthTime");
+      print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
+    }
+    print('*** Fourth section ***');
+    for(int i = newFourthTime; _isIncluded(i, newFourthTime, (newFirstTime-1)%96); i = (++i)%96){
+      //print("$i $newFirstTime");
+      print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
+    }
 
     // Updates the state and makes the widget re-building.
     setState(() {
@@ -124,9 +140,9 @@ class _TestPageState extends State<TestPage> {
     });
   }
 
+  /// Checks if [value] is included in [prev] - [succ] range, extremes included.
   bool _isIncluded(int value, int prev, int succ){
     if (succ < prev) {
-      if (succ == 0) return value >= prev && value >= succ;
       return (value >= prev && value >= succ) || (value <= prev && value <= succ);
     }
     return value >= prev && value <= succ;
