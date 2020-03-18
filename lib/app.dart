@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
@@ -57,9 +58,18 @@ class _TestPageState extends State<TestPage> {
   /// selecting moving one of the handlers.
   String timeToPrint = '';
 
+  // ------ http variables
+  var url = 'https://87952341-157d-45ea-9fa6-a61ccc6d381e.mock.pstmn.io/status';
+
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<void> testHttp() async {
+    var response = await http.get(url);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -131,6 +141,7 @@ class _TestPageState extends State<TestPage> {
       print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
     }
 
+    testHttp();
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
