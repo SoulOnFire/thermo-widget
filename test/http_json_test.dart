@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-
 import 'package:http/http.dart' as http;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thermo_widget/http_json_files/quarter.dart';
@@ -13,23 +12,59 @@ Map<String, String> tempMap = {
   '00': 'T0',
 };
 
-void parseDayString(String dayString){
-  for(int i = 0; i < dayString.length; i++){
+String hexToBinary(String hexString) {
+  String binaryString = '';
+  for (int i = 0; i < hexString.length; i++) {
     // Extract string of binary digits corresponding to the hex digit.
-    String binaryString = int.parse(dayString[i], radix: 16).toRadixString(2);
-    if(binaryString.length < 4) {
+    String binaryDigits = int.parse(hexString[i], radix: 16).toRadixString(2);
+    if (binaryDigits.length < 4) {
       // Adds zeros to the start of the string to obtain 4-digits binary string.
-      for(int zeroToAdd = 4 - binaryString.length; zeroToAdd > 0; zeroToAdd--){
-        binaryString = '0' + binaryString;
+      for (int zeroToAdd = 4 - binaryDigits.length;
+      zeroToAdd > 0; zeroToAdd--) {
+        binaryDigits = '0' + binaryDigits;
       }
     }
-    print(tempMap[binaryString.substring(0, 2)]);
-    print(tempMap[binaryString.substring(2, 4)]);
+    binaryString += binaryDigits;
   }
+  return binaryString;
+}
+
+String binaryToHex(String binaryString) {
+  String hexString = '';
+  for (int i = 0; i <= binaryString.length - 4; i += 4) {
+    String hexDigit = int.parse(binaryString.substring(i, i + 4), radix: 2)
+        .toRadixString(16)
+        .toUpperCase();
+    hexString += hexDigit;
+  }
+  return hexString;
 }
 
 void main() {
-  group('Alcuni test JSON e HTTP', (){
+  group('Alcuni test JSON e HTTP', () {
+    test('Test about DateTime', (){
+      var now = new DateTime.now();
+      print(now);
+      var nowAdded = now.add(new Duration(seconds: 7200));
+      String expiryString = nowAdded.toString();
+      print('String: $expiryString DateTime: ${DateTime.parse(expiryString)}');
+    });
+
+    /*test('Binary => Hex', () {
+      final String binaryDay =
+          '111111111111111111111111111111111111111111111111101010101010101010101010101010101010101010101010111111111111111111111111111111111111111111111111010101010101010101010101010101010101010101010101';
+      String hexString = binaryToHex(binaryDay);
+      print('Hex: $hexString');
+      assert(hexToBinary(hexString) == binaryDay);
+    });
+    test('Hex => Binary', () {
+      final String hexDay = 'FFFFFFFFFFFFAAAAAAAAAAAAFFFFFFFFFFFF555555555555';
+      String binaryString = hexToBinary(hexDay);
+      print('Binary: $binaryString');
+      assert(binaryToHex(binaryString) == hexDay);
+    });
+
+
     test('Test risposta get devices', ()async{
       RestApiHelper helper = RestApiHelper();
       List<dynamic> jsonList = await helper.getDevices();
@@ -43,9 +78,7 @@ void main() {
       parseDayString(currentCalendar['day1']);
     });
 
-
-
-    /*test('Dovrebbe correttamente serializzare e deserializzare', () {
+    test('Dovrebbe correttamente serializzare e deserializzare', () {
       Quarter quarter = Quarter('9:45', '12:30', 21.0);
       // Encoding in json dell'oggetto
       String json = jsonEncode(quarter);
@@ -81,5 +114,4 @@ void main() {
       print('Json ricevuto: $responseJson');
     });*/
   });
-
 }

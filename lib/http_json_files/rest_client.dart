@@ -2,15 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'network_exceptions.dart';
 
 class RestApiHelper {
   /// Url to be used in GET token request.
   final String tokenUrl = 'https://devapi2.cameconnect.net/api/oauth/token';
+
   /// Url of the thermo Rest API
-  final String thermoApiUrl = 'https://thermo-sandbox.cameconnect.net:8443/';
+  final String thermoApiUrl = 'https://thermo-sandbox.cameconnect.net:8443';
   final String getDevicesUrl = 'devices';
-  final String postCalendarUrl = 'control/';
+  final String postDayConfigUrl = 'control';
 
   final String keycode = '67238978E4E70C2C';
 
@@ -137,27 +139,30 @@ class RestApiHelper {
   ]
 }
 ]''';
-  
 
   Future<String> getToken() async {
     try {
-      var response = await http.post(tokenUrl, headers: {
-        'Authorization': 'Basic ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTc6OGRjMTA3Zjc5NWQzNTRhODczYzdjOTlmYzVjZDc0ZDQ4ZmQ0NjhjMzU5MTM0ZGI1ZTg1MTk5YTg4ZGRjM2MzZmIwN2U4MmFhN2ZhY2U3NjhlOTc5MmMzMzU4YTQwMjBiMGM1YWI4MGQ1ZDZjNjViMTQ4MGMzNWJkMWJlN2JhYmFiMTFkZjhmODE0M2I0MTg2NmQ2ZmE5YWFmMjdkMTAxZjg5NmEzMmRhZTFjOTY2YWJhYWJlOGE0Mzk0NTYzZDFhOTc2NzRhYzI2OGNkOTA5ZmIzOGRkMGUxODE5NTBjNzJhNWJlMmE2N2FkODA0MWZkYjgwNjJiMmFmN2Y3MWE1Mg==',
+      var httpResponse = await http.post(tokenUrl, headers: {
+        'Authorization':
+        'Basic ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTc6OGRjMTA3Zjc5NWQzNTRhODczYzdjOTlmYzVjZDc0ZDQ4ZmQ0NjhjMzU5MTM0ZGI1ZTg1MTk5YTg4ZGRjM2MzZmIwN2U4MmFhN2ZhY2U3NjhlOTc5MmMzMzU4YTQwMjBiMGM1YWI4MGQ1ZDZjNjViMTQ4MGMzNWJkMWJlN2JhYmFiMTFkZjhmODE0M2I0MTg2NmQ2ZmE5YWFmMjdkMTAxZjg5NmEzMmRhZTFjOTY2YWJhYWJlOGE0Mzk0NTYzZDFhOTc2NzRhYzI2OGNkOTA5ZmIzOGRkMGUxODE5NTBjNzJhNWJlMmE2N2FkODA0MWZkYjgwNjJiMmFmN2Y3MWE1Mg==',
         'Content-Type': 'application/x-www-form-urlencoded'
       }, body: {
         'username': 'user.cameconnect',
         'password': 'cameRD2019',
         'grant_type': 'password',
       });
-      print('Response body: ${response.body}');
-      Map<String, dynamic> jsonMap = _returnResponse(response);
-      return (jsonMap['access_token'] as String);
+      Map<String, dynamic> jsonMap = _returnResponse(httpResponse);
+      // Stores token and its expiry into Shared Preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('token', jsonMap['access_token']);
+      prefs.setString('expiry_date', DateTime.now().add(new Duration(seconds: jsonMap['expires_in'])).toString());
+      return jsonMap['access_token'];
     } on SocketException {
       throw FetchDataException('No internet connection');
     }
   }
 
-  Map<String, dynamic> _returnResponse(http.Response response) {
+  dynamic _returnResponse(http.Response response) {
     switch (response.statusCode) {
       case 200:
         print(json.decode(response.body));
@@ -170,19 +175,18 @@ class RestApiHelper {
       case 500:
       default:
         throw FetchDataException(
-            'Error occured while Communication with Server with StatusCode : ${response
-                .statusCode}');
+            'Error occured while Communication with Server with StatusCode : ${response.statusCode}');
     }
   }
 
-  Future<List<dynamic>> getDevices() async{
-    try{
+  Future<List<dynamic>> getDevices() async {
+    try {
       /*String token = await getToken();
-      var response = await http.get(thermoApiUrl + getDevicesUrl, headers: {
+      var httpResponse = await http.get(thermoApiUrl + getDevicesUrl, headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       });
-      Map<String, dynamic> jsonMap = _returnResponse(response);*/
+      dynamic jsonResponse = _returnResponse(httpResponse);*/
       List<dynamic> jsonMap = json.decode(testResponse);
       return jsonMap;
     } on SocketException {
@@ -190,12 +194,54 @@ class RestApiHelper {
     }
   }
 
-  Future<bool> sendDayChanges(){
-
+  void sendDayConfig(String binaryDay, int dayNumber, String season) async {
+    String hexDay = _binaryToHex(binaryDay);
+    try {
+      var httpResponse = await http
+          .post('$thermoApiUrl/$postDayConfigUrl/$keycode/$keycode', headers: {
+            //TODO: aggiornare campo token
+        'Authorization': 'Bearer token',
+        'Content-Type': 'application/json',
+      }, body: {
+        '$season.day$dayNumber': hexDay,
+      });
+      dynamic jsonResponse = _returnResponse(httpResponse);
+      print('POST sendDayConfig: $jsonResponse');
+    } on SocketException {
+      throw FetchDataException('No Internet connection');
+    }
   }
 
+  String _hexToBinary(String hexString) {
+    String binaryString = '';
+    for (int i = 0; i < hexString.length; i++) {
+      // Extract string of binary digits corresponding to the hex digit.
+      String binaryDigits = int.parse(hexString[i], radix: 16).toRadixString(2);
+      if (binaryDigits.length < 4) {
+        // Adds zeros to the start of the string to obtain 4-digits binary string.
+        for (int zeroToAdd = 4 - binaryDigits.length;
+        zeroToAdd > 0;
+        zeroToAdd--) {
+          binaryDigits = '0' + binaryDigits;
+        }
+      }
+      binaryString += binaryDigits;
+    }
+    return binaryString;
+  }
 
-  /*
+  String _binaryToHex(String binaryString) {
+    String hexString = '';
+    for (int i = 0; i <= binaryString.length - 4; i += 4) {
+      String hexDigit = int.parse(binaryString.substring(i, i + 4), radix: 2)
+          .toRadixString(16)
+          .toUpperCase();
+      hexString += hexDigit;
+    }
+    return hexString;
+  }
+
+/*
   --- RISPOSTA Get Token
   {
     "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJDbGllbnRVcmkiOiJjYW1lY29ubmVjdC5uZXQ6ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTciLCJhdWQiOltdLCJleHAiOjE1ODUxMzIyMjIsImlhdCI6MTU4NTEyNTAyMiwiaXNzIjoiQ2FtZV9Db25uZWN0IiwianRpIjoiZDkzODJiNTQtMGExNC00YTUzLTkzOTktMmY5OWU2NzM2ZDExIiwicGVybWlzc2lvbnMiOiJVU0VSIiwic2NwIjpbXSwic3ViIjoidXNlci5jYW1lY29ubmVjdCIsInVzZXJpZCI6MTAxMSwidXNlcm5hbWUiOiJ1c2VyLmNhbWVjb25uZWN0In0.I47GRwBO2KpJCkZsCGTqWHwEpycSid-EivumWAZbGDfus4ZtX2MF74uIVfPDMqRm38Dx7S5Q63PL-fqe9L5Q9vrFJ71yG9mw-nk9RFaWDMg60ka7j0hv9wu3XvFxP81qUK6dWuNEuF4mPCZesM6Wo9JYUimrx7ffvyJqtbCEOfn-0JkSC1CdY3dZoq8YN40WekG_e3bGRerNn4Uz8t_6NDi_ty7HwTjhuqNcMBJ7fqJJCdylsyRsPP8B2im8dPrtj5bgMS_6KnjCoFRWh-Bz_7KZooo7ho4HNTMLvFQQGfsR4xT_tVDy5BJyWI-K6F3-TIlFH810NbcKl1DBkMqpog",

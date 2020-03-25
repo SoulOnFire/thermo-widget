@@ -158,6 +158,8 @@ class WidgetPage extends StatefulWidget {
 
   final RestApiHelper _helper = RestApiHelper();
 
+
+
   @override
   State<StatefulWidget> createState() => _WidgetPageState();
 }
@@ -190,7 +192,7 @@ class _WidgetPageState extends State<WidgetPage> {
   @override
   void initState() {
     super.initState();
-    widget._helper.getToken().then((token) => print(token));
+    //widget._helper.getToken().then((token) => print(token));
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -238,10 +240,23 @@ class _WidgetPageState extends State<WidgetPage> {
     // T3 => first-second & third-fourth
     // T2 => second-third
     // T1 => fourth-first
+    String stringToSend = '';
     double t3 = 21;
     double t2 = 18;
     double t1 = 15;
-    print('*** First section ***');
+    for(int i = 0; i <= 95; i++){
+      if(_isIncluded(i, newFirstTime, (newSecondTime - 1) % 96)){
+        stringToSend += '11';
+      } else if(_isIncluded(i, newSecondTime, (newThirdTime - 1) % 96)){
+        stringToSend += '10';
+      } else if(_isIncluded(i, newThirdTime, (newFourthTime - 1) % 96)){
+        stringToSend += '11';
+      } else{
+        stringToSend += '01';
+      }
+    }
+    print('Length: ${stringToSend.length}, String: $stringToSend');
+    /*print('*** First section ***');
     for (int i = newFirstTime;
     _isIncluded(i, newFirstTime, (newSecondTime - 1) % 96);
     i = (++i) % 96) {
@@ -276,9 +291,7 @@ class _WidgetPageState extends State<WidgetPage> {
       var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t2);
       print(jsonEncode(quarter));
       //print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
-    }
-
-    // testHttp();
+    }*/
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
