@@ -1,12 +1,51 @@
 import 'dart:convert';
 
+
 import 'package:http/http.dart' as http;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thermo_widget/json_files/quarter.dart';
+import 'package:thermo_widget/http_json_files/quarter.dart';
+import 'package:thermo_widget/http_json_files/rest_client.dart';
+
+Map<String, String> tempMap = {
+  '11': 'T3',
+  '10': 'T2',
+  '01': 'T1',
+  '00': 'T0',
+};
+
+void parseDayString(String dayString){
+  for(int i = 0; i < dayString.length; i++){
+    // Extract string of binary digits corresponding to the hex digit.
+    String binaryString = int.parse(dayString[i], radix: 16).toRadixString(2);
+    if(binaryString.length < 4) {
+      // Adds zeros to the start of the string to obtain 4-digits binary string.
+      for(int zeroToAdd = 4 - binaryString.length; zeroToAdd > 0; zeroToAdd--){
+        binaryString = '0' + binaryString;
+      }
+    }
+    print(tempMap[binaryString.substring(0, 2)]);
+    print(tempMap[binaryString.substring(2, 4)]);
+  }
+}
 
 void main() {
-  group('Alcuni test JSON e HTTP', () {
-    test('Dovrebbe correttamente serializzare e deserializzare', () {
+  group('Alcuni test JSON e HTTP', (){
+    test('Test risposta get devices', ()async{
+      RestApiHelper helper = RestApiHelper();
+      List<dynamic> jsonList = await helper.getDevices();
+      Map<String, dynamic> jsonMap = jsonList.first as Map<String, dynamic>;
+      List<dynamic> items = jsonMap['items'];
+      Map<String, dynamic> item = items.first as Map<String, dynamic>;
+      String keycode = item['keycode'];
+      print(keycode);
+      String currentSeason = item['current_season'];
+      Map<String, dynamic> currentCalendar = item[currentSeason];
+      parseDayString(currentCalendar['day1']);
+    });
+
+
+
+    /*test('Dovrebbe correttamente serializzare e deserializzare', () {
       Quarter quarter = Quarter('9:45', '12:30', 21.0);
       // Encoding in json dell'oggetto
       String json = jsonEncode(quarter);
@@ -29,7 +68,7 @@ void main() {
       print('Response body: ${response.body}');
     });
 
-    /*test('Effetuare richiesta login CAME', () async {
+    test('Effetuare richiesta login CAME', () async {
       var response = await http
           .post('https://devapi2.cameconnect.net:443/api/oauth/token', headers: {
         'Authorization':

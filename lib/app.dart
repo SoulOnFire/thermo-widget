@@ -1,8 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:thermo_widget/http_json_files/quarter.dart';
+
+import 'http_json_files/rest_client.dart';
 
 import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
+
+/// GLOBAL variables
+final double minTemp = 4.0;
+final double maxTemp = 30.0;
 
 void main() => runApp(MyApp());
 
@@ -14,7 +23,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => MyHomePage(),
+        '/temperatures': (context) => TempPage(),
+        '/widget': (context) => WidgetPage(),
+      },
     );
   }
 }
@@ -22,18 +36,133 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.blue, body: TestPage());
+    return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text('Drawer Header'),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Temperature Page'),
+              onTap: () {
+                // Update the state of the app.
+                // ...
+                // When a user opens the drawer, Flutter adds the drawer to
+                //  the navigation stack.
+                // Then close the drawer.
+                Navigator.popAndPushNamed(context, '/temperatures');
+              },
+            ),
+            ListTile(
+              title: Text('Widget Page'),
+              onTap: () {
+                // Update the state of the app.
+                // ...
+                // When a user opens the drawer, Flutter adds the drawer to
+                //  the navigation stack.
+                // Then close the drawer.
+                Navigator.popAndPushNamed(context, '/widget');
+              },
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: Text('Home Page'),
+      ),
+      body: Center(
+        child: Text('Home page'),
+      ),
+    );
   }
 }
 
-class TestPage extends StatefulWidget {
+class TempPage extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() {
-    return _TestPageState();
-  }
+  State<StatefulWidget> createState() => _TempPageState();
 }
 
-class _TestPageState extends State<TestPage> {
+class _TempPageState extends State<TempPage> {
+  double t1 = 16.8;
+  double t2 = 17.0;
+  double t3 = 17.3;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Set Temperatures'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: _managersTile(),
+    );
+  }
+
+  Widget _managersTile() => Column(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: <Widget>[
+      _tempManager(t1, () {
+        if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
+          setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t1 + 0.1 < t2)
+          setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t2, () {
+        if (t2 - 0.1 > t1)
+          setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t2 + 0.1 < t3)
+          setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t3, () {
+        if (t3 - 0.1 > t2)
+          setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t3 + 0.1 <= maxTemp)
+          setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
+      }),
+    ],
+  );
+
+  Widget _tempManager(
+      double temperature, Function remFunction, Function addFunction) =>
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          IconButton(
+            icon: Icon(Icons.remove),
+            tooltip: 'Decrease temperature by 0.1',
+            onPressed: remFunction,
+          ),
+          Text(temperature.toString()),
+          IconButton(
+            icon: Icon(Icons.add),
+            tooltip: 'Increase temperature by 0.1',
+            onPressed: addFunction,
+          ),
+        ],
+      );
+}
+
+class WidgetPage extends StatefulWidget {
+
+  final RestApiHelper _helper = RestApiHelper();
+
+  @override
+  State<StatefulWidget> createState() => _WidgetPageState();
+}
+
+class _WidgetPageState extends State<WidgetPage> {
   /// Color of the circle.
   final baseColor = Color.fromRGBO(255, 255, 255, 0.3);
 
@@ -58,18 +187,10 @@ class _TestPageState extends State<TestPage> {
   /// selecting moving one of the handlers.
   String timeToPrint = '';
 
-  // ------ http variables
-  var url = 'https://87952341-157d-45ea-9fa6-a61ccc6d381e.mock.pstmn.io/status';
-
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<void> testHttp() async {
-    var response = await http.get(url);
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    widget._helper.getToken().then((token) => print(token));
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -117,31 +238,47 @@ class _TestPageState extends State<TestPage> {
     // T3 => first-second & third-fourth
     // T2 => second-third
     // T1 => fourth-first
-    int t3 = 21;
-    int t2 = 18;
-    int t1 = 15;
+    double t3 = 21;
+    double t2 = 18;
+    double t1 = 15;
     print('*** First section ***');
-    for(int i = newFirstTime; _isIncluded(i, newFirstTime, (newSecondTime-1)%96); i = (++i)%96){
+    for (int i = newFirstTime;
+    _isIncluded(i, newFirstTime, (newSecondTime - 1) % 96);
+    i = (++i) % 96) {
       //print("$i $newSecondTime");
-      print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
+      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t3);
+      print(jsonEncode(quarter));
+      //print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
     }
     print('*** Second section ***');
-    for(int i = newSecondTime; _isIncluded(i, newSecondTime, (newThirdTime-1)%96); i = (++i)%96){
+    for (int i = newSecondTime;
+    _isIncluded(i, newSecondTime, (newThirdTime - 1) % 96);
+    i = (++i) % 96) {
       //print("$i $newThirdTime");
-      print(formatIntervalTime(i, (i+1)%96) + ': $t2 °C');
+      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t1);
+      print(jsonEncode(quarter));
+      //print(formatIntervalTime(i, (i+1)%96) + ': $t2 °C');
     }
     print('*** Third section ***');
-    for(int i = newThirdTime; _isIncluded(i, newThirdTime, (newFourthTime-1)%96); i = (++i)%96){
+    for (int i = newThirdTime;
+    _isIncluded(i, newThirdTime, (newFourthTime - 1) % 96);
+    i = (++i) % 96) {
       //print("$i $newFourthTime");
-      print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
+      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t3);
+      print(jsonEncode(quarter));
+      //print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
     }
     print('*** Fourth section ***');
-    for(int i = newFourthTime; _isIncluded(i, newFourthTime, (newFirstTime-1)%96); i = (++i)%96){
+    for (int i = newFourthTime;
+    _isIncluded(i, newFourthTime, (newFirstTime - 1) % 96);
+    i = (++i) % 96) {
       //print("$i $newFirstTime");
-      print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
+      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t2);
+      print(jsonEncode(quarter));
+      //print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
     }
 
-    testHttp();
+    // testHttp();
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -152,9 +289,10 @@ class _TestPageState extends State<TestPage> {
   }
 
   /// Checks if [value] is included in [prev] - [succ] range, extremes included.
-  bool _isIncluded(int value, int prev, int succ){
+  bool _isIncluded(int value, int prev, int succ) {
     if (succ < prev) {
-      return (value >= prev && value >= succ) || (value <= prev && value <= succ);
+      return (value >= prev && value >= succ) ||
+          (value <= prev && value <= succ);
     }
     return value >= prev && value <= succ;
   }
