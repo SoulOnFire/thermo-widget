@@ -158,8 +158,6 @@ class WidgetPage extends StatefulWidget {
 
   final RestApiHelper _helper = RestApiHelper();
 
-
-
   @override
   State<StatefulWidget> createState() => _WidgetPageState();
 }
@@ -240,58 +238,24 @@ class _WidgetPageState extends State<WidgetPage> {
     // T3 => first-second & third-fourth
     // T2 => second-third
     // T1 => fourth-first
-    String stringToSend = '';
+    String binaryDay = '';
     double t3 = 21;
     double t2 = 18;
     double t1 = 15;
     for(int i = 0; i <= 95; i++){
       if(_isIncluded(i, newFirstTime, (newSecondTime - 1) % 96)){
-        stringToSend += '11';
+        binaryDay += '11';
       } else if(_isIncluded(i, newSecondTime, (newThirdTime - 1) % 96)){
-        stringToSend += '10';
+        binaryDay += '10';
       } else if(_isIncluded(i, newThirdTime, (newFourthTime - 1) % 96)){
-        stringToSend += '11';
+        binaryDay += '11';
       } else{
-        stringToSend += '01';
+        binaryDay += '01';
       }
     }
-    print('Length: ${stringToSend.length}, String: $stringToSend');
-    /*print('*** First section ***');
-    for (int i = newFirstTime;
-    _isIncluded(i, newFirstTime, (newSecondTime - 1) % 96);
-    i = (++i) % 96) {
-      //print("$i $newSecondTime");
-      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t3);
-      print(jsonEncode(quarter));
-      //print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
-    }
-    print('*** Second section ***');
-    for (int i = newSecondTime;
-    _isIncluded(i, newSecondTime, (newThirdTime - 1) % 96);
-    i = (++i) % 96) {
-      //print("$i $newThirdTime");
-      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t1);
-      print(jsonEncode(quarter));
-      //print(formatIntervalTime(i, (i+1)%96) + ': $t2 °C');
-    }
-    print('*** Third section ***');
-    for (int i = newThirdTime;
-    _isIncluded(i, newThirdTime, (newFourthTime - 1) % 96);
-    i = (++i) % 96) {
-      //print("$i $newFourthTime");
-      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t3);
-      print(jsonEncode(quarter));
-      //print(formatIntervalTime(i, (i+1)%96) + ': $t3 °C');
-    }
-    print('*** Fourth section ***');
-    for (int i = newFourthTime;
-    _isIncluded(i, newFourthTime, (newFirstTime - 1) % 96);
-    i = (++i) % 96) {
-      //print("$i $newFirstTime");
-      var quarter = Quarter(formatTime(i), formatTime((i + 1) % 96), t2);
-      print(jsonEncode(quarter));
-      //print(formatIntervalTime(i, (i+1)%96) + ': $t1 °C');
-    }*/
+    print('Length: ${binaryDay.length}, String: $binaryDay');
+    // Send changes to the server
+    widget._helper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -313,7 +277,15 @@ class _WidgetPageState extends State<WidgetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.blueGrey,
+        appBar: AppBar(
+          title: Text('Your day configuration'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        //backgroundColor: Colors.blueGrey,
+        backgroundColor: Colors.white70,
         body: Center(
           child: Container(
               child: TempSlider(

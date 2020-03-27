@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'network_exceptions.dart';
 
 class RestApiHelper {
+
+  SharedPreferences sharedPref;
+
   /// Url to be used in GET token request.
   final String tokenUrl = 'https://devapi2.cameconnect.net/api/oauth/token';
 
@@ -140,7 +143,13 @@ class RestApiHelper {
 }
 ]''';
 
-  Future<String> getToken() async {
+  Future<String> _getToken() async {
+    sharedPref = sharedPref ?? await SharedPreferences.getInstance();
+    if(sharedPref.getString('token') != null && sharedPref.getString('expiry_date') != null){
+      DateTime expiryDate = DateTime.parse(sharedPref.getString('expiry_date'));
+      if(expiryDate.isAfter(DateTime.now())) return sharedPref.getString('token');
+    }
+    // There is not a valid token, so we need to request it.
     try {
       var httpResponse = await http.post(tokenUrl, headers: {
         'Authorization':
@@ -152,13 +161,19 @@ class RestApiHelper {
         'grant_type': 'password',
       });
       Map<String, dynamic> jsonMap = _returnResponse(httpResponse);
-      // Stores token and its expiry into Shared Preferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('token', jsonMap['access_token']);
-      prefs.setString('expiry_date', DateTime.now().add(new Duration(seconds: jsonMap['expires_in'])).toString());
+      // Stores token and its expiry_date into Shared Preferences
+      sharedPref.setString('token', jsonMap['access_token']);
+      sharedPref.setString('expiry_date', DateTime.now().add(new Duration(seconds: jsonMap['expires_in'])).toString());
       return jsonMap['access_token'];
     } on SocketException {
       throw FetchDataException('No internet connection');
+    }
+  }
+
+  Future<String> _getKeyCode() async{
+    sharedPref = sharedPref ?? await SharedPreferences.getInstance();
+    if(sharedPref.getString('keycode') != null){
+
     }
   }
 
@@ -180,8 +195,9 @@ class RestApiHelper {
   }
 
   Future<List<dynamic>> getDevices() async {
+    String token = await _getToken();
     try {
-      /*String token = await getToken();
+      /*
       var httpResponse = await http.get(thermoApiUrl + getDevicesUrl, headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -196,11 +212,11 @@ class RestApiHelper {
 
   void sendDayConfig(String binaryDay, int dayNumber, String season) async {
     String hexDay = _binaryToHex(binaryDay);
+    String token = await _getToken();
     try {
       var httpResponse = await http
           .post('$thermoApiUrl/$postDayConfigUrl/$keycode/$keycode', headers: {
-            //TODO: aggiornare campo token
-        'Authorization': 'Bearer token',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       }, body: {
         '$season.day$dayNumber': hexDay,
@@ -210,6 +226,10 @@ class RestApiHelper {
     } on SocketException {
       throw FetchDataException('No Internet connection');
     }
+  }
+
+  Future<String> getDayConfig(int dayNumber, String season) async {
+
   }
 
   String _hexToBinary(String hexString) {
