@@ -1,11 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:thermo_widget/http_json_files/quarter.dart';
-
 import 'http_json_files/rest_client.dart';
-
 import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
 
@@ -156,8 +150,6 @@ class _TempPageState extends State<TempPage> {
 
 class WidgetPage extends StatefulWidget {
 
-  final RestApiHelper _helper = RestApiHelper();
-
   @override
   State<StatefulWidget> createState() => _WidgetPageState();
 }
@@ -187,10 +179,13 @@ class _WidgetPageState extends State<WidgetPage> {
   /// selecting moving one of the handlers.
   String timeToPrint = '';
 
+  Future<String> _dayFuture;
+
   @override
   void initState() {
     super.initState();
-    //widget._helper.getToken().then((token) => print(token));
+    // Initial load
+    _dayFuture = RestApiHelper.getDayConfig(1, 'winter');
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -233,15 +228,12 @@ class _WidgetPageState extends State<WidgetPage> {
   /// [newThirdTime] Time selected by the handler #3.
   /// [newFourthTime] Time selected by the handler #4.
   void _updateLabelsEnd(int newFirstTime, int newSecondTime, int newThirdTime,
-      int newFourthTime) {
+      int newFourthTime) async{
     timeToPrint = '';
     // T3 => first-second & third-fourth
     // T2 => second-third
     // T1 => fourth-first
     String binaryDay = '';
-    double t3 = 21;
-    double t2 = 18;
-    double t1 = 15;
     for(int i = 0; i <= 95; i++){
       if(_isIncluded(i, newFirstTime, (newSecondTime - 1) % 96)){
         binaryDay += '11';
@@ -253,9 +245,9 @@ class _WidgetPageState extends State<WidgetPage> {
         binaryDay += '01';
       }
     }
-    print('Length: ${binaryDay.length}, String: $binaryDay');
-    // Send changes to the server
-    widget._helper.sendDayConfig(binaryDay, 1, 'winter');
+    //print('Length: ${binaryDay.length}, String: $binaryDay');
+    // Send changes to the server.
+    RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -286,31 +278,51 @@ class _WidgetPageState extends State<WidgetPage> {
         ),
         //backgroundColor: Colors.blueGrey,
         backgroundColor: Colors.white70,
-        body: Center(
-          child: Container(
-              child: TempSlider(
-                96,
-                0,
-                24,
-                48,
-                72,
-                primarySectors: 24,
-                secondarySectors: 96,
-                baseColor: baseColor,
-                hoursColor: Colors.greenAccent,
-                handlerColor: Colors.white,
-                onSelectionChange: _updateLabels,
-                onSelectionEnd: _updateLabelsEnd,
-                sliderStrokeWidth: 36,
-                child: Padding(
-                  padding: const EdgeInsets.all(42.0),
-                  child: Center(
-                      child: Text(timeToPrint,
-                          // To view the intervals values use the comment below.
-                          //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                          style: TextStyle(fontSize: 18.0, color: Colors.black))),
-                ),
-              )),
-        ));
+        body: FutureBuilder<String>(
+          future: _dayFuture,
+          builder: (context, snapshot){
+            if(snapshot.connectionState == ConnectionState.done){
+              if(snapshot.hasError){
+                return Center(
+                  child: Text('Errore'),
+                );
+              }
+              /*return Center(
+                child: Text(snapshot.data),
+              );*/
+              return Center(
+                child: Container(
+                    child: TempSlider(
+                      96,
+                      0,
+                      24,
+                      48,
+                      72,
+                      primarySectors: 24,
+                      secondarySectors: 96,
+                      baseColor: baseColor,
+                      hoursColor: Colors.greenAccent,
+                      handlerColor: Colors.white,
+                      onSelectionChange: _updateLabels,
+                      onSelectionEnd: _updateLabelsEnd,
+                      sliderStrokeWidth: 36,
+                      child: Padding(
+                        padding: const EdgeInsets.all(42.0),
+                        child: Center(
+                            child: Text(timeToPrint,
+                                // To view the intervals values use the comment below.
+                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
+                                style: TextStyle(fontSize: 18.0, color: Colors.black))),
+                      ),
+                    )),
+              );
+            } else {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
+        ),
+        );
   }
 }

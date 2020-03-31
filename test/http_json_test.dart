@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_test/flutter_test.dart';
 import '../lib/http_json_files/rest_client.dart';
 import 'package:thermo_widget/http_json_files/quarter.dart';
-import 'package:thermo_widget/http_json_files/rest_client.dart';
 
 Map<String, String> tempMap = {
   '11': 'T3',
@@ -43,13 +42,37 @@ String binaryToHex(String binaryString) {
 
 void main() {
   group('Alcuni test JSON e HTTP', () {
-    test('Test about DateTime', (){
+    /*test('Test Token factory', () async {
+      try {
+        var httpResponse = await http.post(
+            'https://devapi2.cameconnect.net/api/oauth/token', headers: {
+          'Authorization':
+          'Basic ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTc6OGRjMTA3Zjc5NWQzNTRhODczYzdjOTlmYzVjZDc0ZDQ4ZmQ0NjhjMzU5MTM0ZGI1ZTg1MTk5YTg4ZGRjM2MzZmIwN2U4MmFhN2ZhY2U3NjhlOTc5MmMzMzU4YTQwMjBiMGM1YWI4MGQ1ZDZjNjViMTQ4MGMzNWJkMWJlN2JhYmFiMTFkZjhmODE0M2I0MTg2NmQ2ZmE5YWFmMjdkMTAxZjg5NmEzMmRhZTFjOTY2YWJhYWJlOGE0Mzk0NTYzZDFhOTc2NzRhYzI2OGNkOTA5ZmIzOGRkMGUxODE5NTBjNzJhNWJlMmE2N2FkODA0MWZkYjgwNjJiMmFmN2Y3MWE1Mg==',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }, body: {
+          'username': 'user.cameconnect',
+          'password': 'cameRD2019',
+          'grant_type': 'password',
+        });
+        Map<String, dynamic> jsonMap = jsonDecode(httpResponse.body);
+        jsonMap['expires_in'] = DateTime.now()
+            .add(new Duration(seconds: jsonMap['expires_in']))
+            .toString();
+        var t = Token.fromJson(jsonMap);
+        print('${t.expiryDate} , ${t.tokenString}');
+      } catch(e) {
+        throw Exception(e);
+      }
+
+    });*/
+
+    /*test('Test about DateTime', (){
       var now = new DateTime.now();
       print(now);
       var nowAdded = now.add(new Duration(seconds: 7200));
       String expiryString = nowAdded.toString();
       print('String: $expiryString DateTime: ${DateTime.parse(expiryString)}');
-    });
+    });*/
 
     /*test('Binary => Hex', () {
       final String binaryDay =
