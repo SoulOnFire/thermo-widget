@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'http_json_files/rest_client.dart';
 import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
+import 'http_json_files/rest_client.dart';
 
 /// GLOBAL variables
 final double minTemp = 4.0;
@@ -19,60 +19,9 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => MyHomePage(),
+        '/': (context) => WidgetPage(),
         '/temperatures': (context) => TempPage(),
-        '/widget': (context) => WidgetPage(),
       },
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              child: Text('Drawer Header'),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-            ),
-            ListTile(
-              title: Text('Temperature Page'),
-              onTap: () {
-                // Update the state of the app.
-                // ...
-                // When a user opens the drawer, Flutter adds the drawer to
-                //  the navigation stack.
-                // Then close the drawer.
-                Navigator.popAndPushNamed(context, '/temperatures');
-              },
-            ),
-            ListTile(
-              title: Text('Widget Page'),
-              onTap: () {
-                // Update the state of the app.
-                // ...
-                // When a user opens the drawer, Flutter adds the drawer to
-                //  the navigation stack.
-                // Then close the drawer.
-                Navigator.popAndPushNamed(context, '/widget');
-              },
-            ),
-          ],
-        ),
-      ),
-      appBar: AppBar(
-        title: Text('Home Page'),
-      ),
-      body: Center(
-        child: Text('Home page'),
-      ),
     );
   }
 }
@@ -185,6 +134,7 @@ class _WidgetPageState extends State<WidgetPage> {
   void initState() {
     super.initState();
     // Initial load
+    // TODO: decommentare dopo sistemazione
     _dayFuture = RestApiHelper.getDayConfig(1, 'winter');
   }
 
@@ -231,23 +181,25 @@ class _WidgetPageState extends State<WidgetPage> {
       int newFourthTime) async{
     timeToPrint = '';
     // T3 => first-second & third-fourth
-    // T2 => second-third
-    // T1 => fourth-first
+    // T1 => second-third
+    // T2 => fourth-first
     String binaryDay = '';
     for(int i = 0; i <= 95; i++){
       if(_isIncluded(i, newFirstTime, (newSecondTime - 1) % 96)){
         binaryDay += '11';
       } else if(_isIncluded(i, newSecondTime, (newThirdTime - 1) % 96)){
-        binaryDay += '10';
+        binaryDay += '01';
       } else if(_isIncluded(i, newThirdTime, (newFourthTime - 1) % 96)){
         binaryDay += '11';
       } else{
-        binaryDay += '01';
+        binaryDay += '10';
       }
     }
-    //print('Length: ${binaryDay.length}, String: $binaryDay');
+    print('Length: ${binaryDay.length}, String: $binaryDay');
+    print(binaryToHex(binaryDay));
     // Send changes to the server.
-    RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
+    // TODO: decommentare dopo sistemazione
+    //RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -269,16 +221,36 @@ class _WidgetPageState extends State<WidgetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Center(child: Text('Thermo App')),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Temperature Page'),
+              onTap: () {
+                // Update the state of the app.
+                // ...
+                // When a user opens the drawer, Flutter adds the drawer to
+                //  the navigation stack.
+                // Then close the drawer.
+                Navigator.popAndPushNamed(context, '/temperatures');
+              },
+            ),
+          ],
+        ),
+      ),
         appBar: AppBar(
           title: Text('Your day configuration'),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
         ),
-        //backgroundColor: Colors.blueGrey,
-        backgroundColor: Colors.white70,
-        body: FutureBuilder<String>(
+        //backgroundColor: Colors.white70,
+      body: FutureBuilder<String>(
           future: _dayFuture,
           builder: (context, snapshot){
             if(snapshot.connectionState == ConnectionState.done){
@@ -290,31 +262,41 @@ class _WidgetPageState extends State<WidgetPage> {
               /*return Center(
                 child: Text(snapshot.data),
               );*/
-              return Center(
-                child: Container(
-                    child: TempSlider(
-                      96,
-                      0,
-                      24,
-                      48,
-                      72,
-                      primarySectors: 24,
-                      secondarySectors: 96,
-                      baseColor: baseColor,
-                      hoursColor: Colors.greenAccent,
-                      handlerColor: Colors.white,
-                      onSelectionChange: _updateLabels,
-                      onSelectionEnd: _updateLabelsEnd,
-                      sliderStrokeWidth: 36,
-                      child: Padding(
-                        padding: const EdgeInsets.all(42.0),
-                        child: Center(
-                            child: Text(timeToPrint,
-                                // To view the intervals values use the comment below.
-                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                                style: TextStyle(fontSize: 18.0, color: Colors.black))),
-                      ),
-                    )),
+              return Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color.fromRGBO(0, 176, 237, 1), Color.fromRGBO(0, 176, 237, 0.3)],
+                      stops: [0.2, 0.9],
+                    )
+                ),
+                child: Center(
+                  child: Container(
+                      child: TempSlider(
+                        96,
+                        12,
+                        36,
+                        60,
+                        84,
+                        primarySectors: 24,
+                        secondarySectors: 96,
+                        baseColor: baseColor,
+                        hoursColor: Colors.greenAccent,
+                        handlerColor: Colors.white,
+                        onSelectionChange: _updateLabels,
+                        onSelectionEnd: _updateLabelsEnd,
+                        sliderStrokeWidth: 36,
+                        child: Padding(
+                          padding: const EdgeInsets.all(42.0),
+                          child: Center(
+                              child: Text(timeToPrint,
+                                  // To view the intervals values use the comment below.
+                                  //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
+                                  style: TextStyle(fontSize: 18.0, color: Colors.black))),
+                        ),
+                      )),
+                ),
               );
             } else {
               return Center(

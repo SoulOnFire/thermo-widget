@@ -25,7 +25,7 @@ String _hexToBinary(String hexString) {
 }
 
 /// Converts the [binaryString] into a hex string.
-String _binaryToHex(String binaryString) {
+String binaryToHex(String binaryString) {
   String hexString = '';
   for (int i = 0; i <= binaryString.length - 4; i += 4) {
     String hexDigit = int.parse(binaryString.substring(i, i + 4), radix: 2)
@@ -59,8 +59,10 @@ class RestApiHelper {
     if (sharedPref.getString('token') != null &&
         sharedPref.getString('expiry_date') != null) {
       DateTime expiryDate = DateTime.parse(sharedPref.getString('expiry_date'));
-      if (expiryDate.isAfter(DateTime.now()))
+      if (expiryDate.isAfter(DateTime.now())) {
+        print("Shared preference token used");
         return sharedPref.getString('token');
+      }
     }
     // There is not a valid token, so we need to request it.
     try {
@@ -82,6 +84,7 @@ class RestApiHelper {
               .add(new Duration(seconds: jsonMap['expires_in']))
               .toString());
       // Returns the received token.
+      print('New token used');
       return jsonMap['access_token'] as String;
     } on SocketException {
       throw FetchDataException('No internet connection');
@@ -144,7 +147,7 @@ class RestApiHelper {
   static Future<bool> sendDayConfig(
       String binaryDay, int dayNumber, String season) async {
     // Converts the configuration into hexadecimal string.
-    String hexDay = _binaryToHex(binaryDay);
+    String hexDay = binaryToHex(binaryDay);
     // Gets token and keycode.
     String token = await _getToken();
     String keycode = await _getKeyCode();
@@ -157,7 +160,7 @@ class RestApiHelper {
         '$season.day$dayNumber': hexDay,
       }));
       Map<String, dynamic> bodyResponse = _returnResponse(httpResponse);
-      print('${bodyResponse['ok']}');
+      print('${DateTime.now().toString()} ${bodyResponse['ok']}');
       return bodyResponse['ok'] as bool;
     } on SocketException {
       throw FetchDataException('No Internet connection');

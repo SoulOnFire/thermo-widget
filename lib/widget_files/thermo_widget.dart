@@ -187,9 +187,9 @@ class _TempSliderState extends State<TempSlider> {
           hoursColor: widget.hoursColor ?? Color.fromRGBO(255, 255, 255, 0.3),
           minutesColor: widget.minutesColor ?? Colors.white30,
           section12Color: widget.section12Color ?? Colors.amber,
-          section23Color: widget.section23Color ?? Colors.blue,
-          section34Color: widget.section34Color ?? Colors.deepPurpleAccent,
-          section41Color: widget.section41Color ?? Colors.brown,
+          section23Color: widget.section23Color ?? Colors.deepPurpleAccent,
+          section34Color: widget.section34Color ?? Colors.amber,
+          section41Color: widget.section41Color ?? Colors.brown[400],
           handlerColor: widget.handlerColor ?? Colors.white,
           handlerOutterRadius: widget.handlerOutterRadius ?? 22.0,
         ));
