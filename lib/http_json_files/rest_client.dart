@@ -167,7 +167,8 @@ class RestApiHelper {
     }
   }
 
-  /// Gets the temperature configuration for the desired [dayNumber] in [season].
+  /// Returns the temperature configuration for the desired [dayNumber] in
+  /// binary format in [season].
   static Future<String> getDayConfig(int dayNumber, String season) async {
     List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;

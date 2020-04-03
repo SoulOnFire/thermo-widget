@@ -41,6 +41,121 @@ String binaryToHex(String binaryString) {
 
 void main() {
   group('Alcuni test JSON e HTTP', () {
+    test('Test importazione e intepretazione stringa del giorno', (){
+      // T3 => 11
+      // T2 => 10
+      // T1 => 01
+      // first Section prima di T2, third section dopo T2 e prima di T1
+      Map<String, int> t3Section = Map();
+      Map<String, int> t3Section2 = Map();
+      Map<String, int> t2Section = Map();
+      Map<String, int> t1Section = Map();
+
+      var es2 = '111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101010101010101010101010111111111111111111111111111101010101010101010101010101010101010101010101010111';
+      var es1 = '010101010101010101010101010101010101010101010101111111111111111111111111111111111111111111111111101010101010101010101010101010101010101010101010101010101010101010101111111111111111111111111111';
+
+      String tempString = '';
+      for(int i = 0; i <= es1.length - 2; i += 2){
+        String quarter = es1.substring(i, i + 2);
+        switch(quarter){
+          case '11':
+            if(t3Section['start'] == null || t3Section['finish'] == null){
+              //
+              if(t3Section['start'] == null){
+                if(i == 0 && es1.substring(es1.length - 2,es1.length) == quarter){
+                  int j = es1.length - 2;
+                  while(es1.substring(j - 2,j) == quarter){
+                    j -= 2;
+                  }
+                  t3Section['start'] = j ~/ 2;
+                } else{
+                  t3Section['start'] = i ~/ 2;
+                }
+              }
+              if(i + 2 <= (es1.length - 2) && es1.substring(i + 2, i + 4)!= quarter) {
+                t3Section['finish'] = i ~/ 2;
+              } else if(i + 2 > (es1.length - 2)){
+                t3Section['finish'] = (es1.length - 2) ~/2;
+              }
+            } else {
+              if(t3Section2['start'] == null){
+                if(i == 0 && es1.substring(es1.length - 2,es1.length) == quarter){
+                  int j = es1.length - 2;
+                  while(es1.substring(j - 2,j) == quarter){
+                    j -= 2;
+                  }
+                  t3Section2['start'] = j ~/ 2;
+                } else{
+                  t3Section2['start'] = i ~/ 2;
+                }
+              }
+              if(i + 2 <= (es1.length - 2) && es1.substring(i + 2, i + 4)!= quarter) {
+                t3Section2['finish'] = i ~/ 2;
+              } else if(i + 2 > (es1.length - 2)){
+                t3Section2['finish'] = (es1.length - 2) ~/2;
+              }
+            }
+            tempString += 'T3';
+            break;
+          case '10':
+            if(t2Section['start'] == null) {
+              if(i == 0 && es1.substring(es1.length - 2,es1.length) == quarter){
+                int j = es1.length - 2;
+                while(es1.substring(j - 2,j) == quarter){
+                  j -= 2;
+                }
+                t2Section['start'] = j ~/ 2;
+              } else{
+                t2Section['start'] = i ~/ 2;
+              }
+            }
+            if(i + 2 <= (es1.length - 2) && es1.substring(i + 2, i + 4)!= quarter) {
+              t2Section['finish'] = i ~/ 2;
+            } else if(i + 2 > (es1.length - 2)){
+              t2Section['finish'] = (es1.length - 2) ~/2;
+            }
+            tempString += 'T2';
+            break;
+          case '01':
+            if(t1Section['start'] == null) {
+              if(i == 0 && es1.substring(es1.length - 2,es1.length) == quarter){
+                int j = es1.length - 2;
+                while(es1.substring(j - 2,j) == quarter){
+                  j -= 2;
+                }
+                t1Section['start'] = j ~/ 2;
+              } else{
+                t1Section['start'] = i ~/ 2;
+              }
+              t1Section['start'] = i ~/ 2;
+            }
+            if(i + 2 <= (es1.length - 2) && es1.substring(i + 2, i + 4)!= quarter) {
+              t1Section['finish'] = i ~/ 2;
+            } else if(i + 2 > (es1.length - 2)){
+              t1Section['finish'] = (es1.length - 2) ~/2;
+            }
+            tempString += 'T1';
+            break;
+        }
+      }
+      print('t3 section: ${t3Section.toString()}');
+      print('t3 section: ${t3Section2.toString()}');
+      print('t2 section: ${t2Section.toString()}');
+      print('t1 section: ${t1Section.toString()}');
+      int firstTime, secondTime, thirdTime, fourthTime;
+      if((t3Section['finish'] + 1) % 96 == t1Section['start']) {
+        firstTime = t3Section['start'];
+        thirdTime = t3Section2['start'];
+      } else {
+        firstTime = t3Section2['start'];
+        thirdTime = t3Section['start'];
+      }
+      secondTime = t1Section['start'];
+      fourthTime = t2Section['start'];
+      print('First Time: $firstTime, Second Time: $secondTime, Third Time: $thirdTime, Fourth time: $fourthTime');
+      print('Length: ${tempString.length}, String: $tempString');
+
+    });
     /*test('Test Token factory', () async {
       try {
         var httpResponse = await http.post(
