@@ -3,8 +3,6 @@ import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
 import 'http_json_files/rest_client.dart';
 
-import 'dart:math';
-
 /// GLOBAL variables
 final double minTemp = 4.0;
 final double maxTemp = 30.0;
@@ -141,31 +139,125 @@ class _WidgetPageState extends State<WidgetPage> {
   // 1 = 15 minutes , valid interval 0:95
   /// The value in which will be positioned the handler #1.
   /// The initial value of section #1 and end value of section #4.
-  int firstTime = 0;
+  int firstTime = 12;
 
   /// The value in which will be positioned the handler #2.
   /// The initial value of section #2 and end value of section #1.
-  int secondTime = 24;
+  int secondTime = 36;
 
   /// The value in which will be positioned the handler #3.
   /// The initial value of section #3 and end value of section #2.
-  int thirdTime = 48;
+  int thirdTime = 60;
 
   /// The value in which will be positioned the handler #4.
   /// The initial value of section #4 and end value of section #3.
-  int fourthTime = 72;
+  int fourthTime = 84;
 
   /// Time to be displayed inside the handler representing the time the user is
   /// selecting moving one of the handlers.
   String timeToPrint = '';
 
-  Future<String> _dayFuture;
+  Future<List<int>> _dayFuture;
 
   @override
   void initState() {
     super.initState();
     // Initial load.
     _dayFuture = RestApiHelper.getDayConfig(1, 'winter');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Center(child: Text('Thermo App')),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Temperature Page'),
+              onTap: () {
+                // Update the state of the app.
+                // ...
+                // When a user opens the drawer, Flutter adds the drawer to
+                //  the navigation stack.
+                // Then close the drawer.
+                Navigator.popAndPushNamed(context, '/temperatures');
+              },
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: Text('Your day configuration'),
+      ),
+      //backgroundColor: Colors.white70,
+      body: FutureBuilder<List<int>>(
+        future: _dayFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Errore: ${snapshot.error}'),
+              );
+            }
+            return Container(
+              decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    colors: [
+                      Color.fromRGBO(0, 176, 237, 1),
+                      Color.fromRGBO(0, 176, 237, 0.3)
+                    ],
+                    radius: 0.9,
+                    stops: [0.4, 0.9],
+                  )
+              ),
+              child: Center(
+                child: Container(
+                    child: TempSlider(
+                      96,
+                      // Initial handlers' values loaded from the server.
+                      snapshot.data[0],
+                      snapshot.data[1],
+                      snapshot.data[2],
+                      snapshot.data[3],
+                      height: widget.height,
+                      width: widget.width,
+                      primarySectors: 24,
+                      secondarySectors: 96,
+                      baseColor: baseColor,
+                      hoursColor: Colors.greenAccent,
+                      handlerColor: Colors.white,
+                      onSelectionChange: _updateLabels,
+                      onSelectionEnd: _updateLabelsEnd,
+                      sliderStrokeWidth: 36,
+                      child: Padding(
+                        padding: const EdgeInsets.all(42.0),
+                        child: Center(
+                            child: Text(timeToPrint,
+                                // To view the intervals values use the comment below.
+                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
+                                style: TextStyle(
+                                    fontSize: 18.0, color: Colors.black))),
+                      ),
+                    )),
+              ),
+            );
+          } else {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      ),
+    );
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -210,16 +302,9 @@ class _WidgetPageState extends State<WidgetPage> {
   void _updateLabelsEnd(int newFirstTime, int newSecondTime, int newThirdTime,
       int newFourthTime) async {
     timeToPrint = '';
-    // T3 => first-second & third-fourth
-    // T1 => second-third
-    // T2 => fourth-first
     String binaryDay = _calculatesBinaryDay(
         newFirstTime, newSecondTime, newThirdTime, newFourthTime);
-
-    print('Length: ${binaryDay.length}, String: $binaryDay');
-    print(binaryToHex(binaryDay));
     // Send changes to the server.
-    // TODO: decommentare dopo sistemazione
      RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
@@ -258,215 +343,7 @@ class _WidgetPageState extends State<WidgetPage> {
     return value >= prev && value <= succ;
   }
 
-  List<int> _getTimes(String binaryString){
-    Map<String, int> t3Section = Map();
-    Map<String, int> t3Section2 = Map();
-    Map<String, int> t2Section = Map();
-    Map<String, int> t1Section = Map();
 
-    for(int i = 0; i <= binaryString.length - 2; i += 2){
-      String quarter = binaryString.substring(i, i + 2);
-      switch(quarter){
-        case '11':
-          if(t3Section['start'] == null || t3Section['finish'] == null){
-            //
-            if(t3Section['start'] == null){
-              if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
-                int j = binaryString.length - 2;
-                while(binaryString.substring(j - 2,j) == quarter){
-                  j -= 2;
-                }
-                t3Section['start'] = j ~/ 2;
-              } else{
-                t3Section['start'] = i ~/ 2;
-              }
-            }
-            if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-              t3Section['finish'] = i ~/ 2;
-            } else if(i + 2 > (binaryString.length - 2)){
-              t3Section['finish'] = (binaryString.length - 2) ~/2;
-            }
-          } else {
-            if(t3Section2['start'] == null){
-              if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
-                int j = binaryString.length - 2;
-                while(binaryString.substring(j - 2,j) == quarter){
-                  j -= 2;
-                }
-                t3Section2['start'] = j ~/ 2;
-              } else{
-                t3Section2['start'] = i ~/ 2;
-              }
-            }
-            if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-              t3Section2['finish'] = i ~/ 2;
-            } else if(i + 2 > (binaryString.length - 2)){
-              t3Section2['finish'] = (binaryString.length - 2) ~/2;
-            }
-          }
-          break;
-        case '10':
-          if(t2Section['start'] == null) {
-            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
-              int j = binaryString.length - 2;
-              while(binaryString.substring(j - 2,j) == quarter){
-                j -= 2;
-              }
-              t2Section['start'] = j ~/ 2;
-            } else{
-              t2Section['start'] = i ~/ 2;
-            }
-          }
-          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-            t2Section['finish'] = i ~/ 2;
-          } else if(i + 2 > (binaryString.length - 2)){
-            t2Section['finish'] = (binaryString.length - 2) ~/2;
-          }
-          break;
-        case '01':
-          if(t1Section['start'] == null) {
-            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
-              int j = binaryString.length - 2;
-              while(binaryString.substring(j - 2,j) == quarter){
-                j -= 2;
-              }
-              t1Section['start'] = j ~/ 2;
-            } else{
-              t1Section['start'] = i ~/ 2;
-            }
-            t1Section['start'] = i ~/ 2;
-          }
-          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-            t1Section['finish'] = i ~/ 2;
-          } else if(i + 2 > (binaryString.length - 2)){
-            t1Section['finish'] = (binaryString.length - 2) ~/2;
-          }
-          break;
-      }
-    }
-    print('t3 section: ${t3Section.toString()}');
-    print('t3 section: ${t3Section2.toString()}');
-    print('t2 section: ${t2Section.toString()}');
-    print('t1 section: ${t1Section.toString()}');
-    int firstTime, secondTime, thirdTime, fourthTime;
-    if((t3Section['finish'] + 1) % 96 == t1Section['start']) {
-      firstTime = t3Section['start'];
-      thirdTime = t3Section2['start'];
-    } else {
-      firstTime = t3Section2['start'];
-      thirdTime = t3Section['start'];
-    }
-    secondTime = t1Section['start'];
-    fourthTime = t2Section['start'];
-    return [firstTime, secondTime, thirdTime, fourthTime];
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              child: Center(child: Text('Thermo App')),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-            ),
-            ListTile(
-              title: Text('Temperature Page'),
-              onTap: () {
-                // Update the state of the app.
-                // ...
-                // When a user opens the drawer, Flutter adds the drawer to
-                //  the navigation stack.
-                // Then close the drawer.
-                Navigator.popAndPushNamed(context, '/temperatures');
-              },
-            ),
-          ],
-        ),
-      ),
-      appBar: AppBar(
-        title: Text('Your day configuration'),
-      ),
-      //backgroundColor: Colors.white70,
-      body: FutureBuilder<String>(
-        future: _dayFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Text('Errore: ${snapshot.error}'),
-              );
-            }
-            // Calculates handlers' position.
-            List<int> times = _getTimes(snapshot.data);
-            print(times);
-            return Container(
-              decoration: BoxDecoration(
-                /*gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.fromRGBO(0, 176, 237, 1),
-                      Color.fromRGBO(0, 176, 237, 0.3)
-                    ],
-                    stops: [0.2, 0.9],
-                  )*/
-                  gradient: RadialGradient(
-                    center: Alignment.center,
-                    colors: [
-                      Color.fromRGBO(0, 176, 237, 1),
-                      Color.fromRGBO(0, 176, 237, 0.3)
-                    ],
-                    radius: 0.9,
-                    stops: [0.4, 0.9],
-                  )
-              ),
-              child: Center(
-                child: Container(
-                    child: TempSlider(
-                      96,
-                      /*12,
-                      36,
-                      60,
-                      84,*/
-                      times[0],
-                      times[1],
-                      times[2],
-                      times[3],
-                      height: widget.height,
-                      width: widget.width,
-                      primarySectors: 24,
-                      secondarySectors: 96,
-                      baseColor: baseColor,
-                      hoursColor: Colors.greenAccent,
-                      handlerColor: Colors.white,
-                      onSelectionChange: _updateLabels,
-                      onSelectionEnd: _updateLabelsEnd,
-                      sliderStrokeWidth: 36,
-                      child: Padding(
-                        padding: const EdgeInsets.all(42.0),
-                        child: Center(
-                            child: Text(timeToPrint,
-                                // To view the intervals values use the comment below.
-                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                                style: TextStyle(
-                                    fontSize: 18.0, color: Colors.black))),
-                      ),
-                    )),
-              ),
-            );
-          } else {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },
-      ),
-    );
-  }
+
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:thermo_widget/widget_files/utils.dart';
 import 'network_exceptions.dart';
 
 /// Converts the [hexString] into a binary string.
@@ -25,7 +26,7 @@ String _hexToBinary(String hexString) {
 }
 
 /// Converts the [binaryString] into a hex string.
-String binaryToHex(String binaryString) {
+String _binaryToHex(String binaryString) {
   String hexString = '';
   for (int i = 0; i <= binaryString.length - 4; i += 4) {
     String hexDigit = int.parse(binaryString.substring(i, i + 4), radix: 2)
@@ -34,6 +35,109 @@ String binaryToHex(String binaryString) {
     hexString += hexDigit;
   }
   return hexString;
+}
+
+List<int> _getTimes(String binaryString){
+  Map<String, int> t3Section = Map();
+  Map<String, int> t3Section2 = Map();
+  Map<String, int> t2Section = Map();
+  Map<String, int> t1Section = Map();
+
+  for(int i = 0; i <= binaryString.length - 2; i += 2){
+    String quarter = binaryString.substring(i, i + 2);
+    switch(quarter){
+      case '11':
+        if(t3Section['start'] == null || t3Section['finish'] == null){
+          //
+          if(t3Section['start'] == null){
+            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+              int j = binaryString.length - 2;
+              while(binaryString.substring(j - 2,j) == quarter){
+                j -= 2;
+              }
+              t3Section['start'] = j ~/ 2;
+            } else{
+              t3Section['start'] = i ~/ 2;
+            }
+          }
+          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
+            t3Section['finish'] = i ~/ 2;
+          } else if(i + 2 > (binaryString.length - 2)){
+            t3Section['finish'] = (binaryString.length - 2) ~/2;
+          }
+        } else {
+          if(t3Section2['start'] == null){
+            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+              int j = binaryString.length - 2;
+              while(binaryString.substring(j - 2,j) == quarter){
+                j -= 2;
+              }
+              t3Section2['start'] = j ~/ 2;
+            } else{
+              t3Section2['start'] = i ~/ 2;
+            }
+          }
+          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
+            t3Section2['finish'] = i ~/ 2;
+          } else if(i + 2 > (binaryString.length - 2)){
+            t3Section2['finish'] = (binaryString.length - 2) ~/2;
+          }
+        }
+        break;
+      case '10':
+        if(t2Section['start'] == null) {
+          if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+            int j = binaryString.length - 2;
+            while(binaryString.substring(j - 2,j) == quarter){
+              j -= 2;
+            }
+            t2Section['start'] = j ~/ 2;
+          } else{
+            t2Section['start'] = i ~/ 2;
+          }
+        }
+        if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
+          t2Section['finish'] = i ~/ 2;
+        } else if(i + 2 > (binaryString.length - 2)){
+          t2Section['finish'] = (binaryString.length - 2) ~/2;
+        }
+        break;
+      case '01':
+        if(t1Section['start'] == null) {
+          if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+            int j = binaryString.length - 2;
+            while(binaryString.substring(j - 2,j) == quarter){
+              j -= 2;
+            }
+            t1Section['start'] = j ~/ 2;
+          } else{
+            t1Section['start'] = i ~/ 2;
+          }
+          t1Section['start'] = i ~/ 2;
+        }
+        if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
+          t1Section['finish'] = i ~/ 2;
+        } else if(i + 2 > (binaryString.length - 2)){
+          t1Section['finish'] = (binaryString.length - 2) ~/2;
+        }
+        break;
+    }
+  }
+  print('t3 section: ${t3Section.toString()}');
+  print('t3 section: ${t3Section2.toString()}');
+  print('t2 section: ${t2Section.toString()}');
+  print('t1 section: ${t1Section.toString()}');
+  int firstTime, secondTime, thirdTime, fourthTime;
+  if((t3Section['finish'] + 1) % 96 == t1Section['start']) {
+    firstTime = t3Section['start'];
+    thirdTime = t3Section2['start'];
+  } else {
+    firstTime = t3Section2['start'];
+    thirdTime = t3Section['start'];
+  }
+  secondTime = t1Section['start'];
+  fourthTime = t2Section['start'];
+  return [firstTime, secondTime, thirdTime, fourthTime];
 }
 
 class RestApiHelper {
@@ -147,7 +251,8 @@ class RestApiHelper {
   static Future<bool> sendDayConfig(
       String binaryDay, int dayNumber, String season) async {
     // Converts the configuration into hexadecimal string.
-    String hexDay = binaryToHex(binaryDay);
+    String hexDay = _binaryToHex(binaryDay);
+    print('Sending day: $hexDay');
     // Gets token and keycode.
     String token = await _getToken();
     String keycode = await _getKeyCode();
@@ -169,12 +274,17 @@ class RestApiHelper {
 
   /// Returns the temperature configuration for the desired [dayNumber] in
   /// binary format in [season].
-  static Future<String> getDayConfig(int dayNumber, String season) async {
+  static Future<List<int>> getDayConfig(int dayNumber, String season) async {
     List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;
     Map<String, dynamic> weekConf = firstDevInfo[season];
+    // TODO: eliminare dopo testing.
+    print('Day received: ${weekConf['day$dayNumber'] as String}');
+    print('Day received: ${_hexToBinary(weekConf['day$dayNumber'] as String)}');
+    List<int> expectedPositions = _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+    print('#1: ${formatTime(expectedPositions[0])}\n#2: ${formatTime(expectedPositions[1])}\n#3: ${formatTime(expectedPositions[2])}\n#4_ ${formatTime(expectedPositions[3])},');
     // Converts the configuration into binary and sent back to the caller.
-    return _hexToBinary(weekConf['day$dayNumber'] as String);
+    return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 
 /*
