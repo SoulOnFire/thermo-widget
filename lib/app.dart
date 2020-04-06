@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:thermo_widget/widget_files/hour_painter.dart';
 import 'widget_files/thermo_widget.dart';
 import 'widget_files/utils.dart';
-import 'http_json_files/rest_client.dart';
+import 'network_files/rest_client.dart';
 
 /// GLOBAL variables
 final double minTemp = 4.0;
@@ -50,37 +51,35 @@ class _TempPageState extends State<TempPage> {
     );
   }
 
-  Widget _managersTile() =>
-      Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          _tempManager(t1, 'T1', Icons.work, Colors.deepPurple, () {
-            if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
-              setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t1 + 0.1 < t2)
-              setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
-          }),
-          _tempManager(t2, 'T2', Icons.brightness_3, Colors.brown[400], () {
-            if (t2 - 0.1 > t1)
-              setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t2 + 0.1 < t3)
-              setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
-          }),
-          _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
-            if (t3 - 0.1 > t2)
-              setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t3 + 0.1 <= maxTemp)
-              setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
-          }),
-        ],
-      );
+  Widget _managersTile() => Column(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: <Widget>[
+      _tempManager(t1, 'T1', Icons.work, Colors.deepPurple, () {
+        if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
+          setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t1 + 0.1 < t2)
+          setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t2, 'T2', Icons.brightness_3, Colors.brown[400], () {
+        if (t2 - 0.1 > t1)
+          setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t2 + 0.1 < t3)
+          setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
+        if (t3 - 0.1 > t2)
+          setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t3 + 0.1 <= maxTemp)
+          setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
+      }),
+    ],
+  );
 
   Widget _tempManager(double temperature, String text, IconData icon,
-      Color color,
-      Function remFunction, Function addFunction) =>
+      Color color, Function remFunction, Function addFunction) =>
       Container(
         padding: EdgeInsets.all(5.0),
         decoration: BoxDecoration(
@@ -124,7 +123,6 @@ class _TempPageState extends State<TempPage> {
 }
 
 class WidgetPage extends StatefulWidget {
-
   final double height = 300.0;
   final double width = 300;
 
@@ -197,14 +195,13 @@ class _WidgetPageState extends State<WidgetPage> {
       appBar: AppBar(
         title: Text('Your day configuration'),
       ),
-      //backgroundColor: Colors.white70,
       body: FutureBuilder<List<int>>(
         future: _dayFuture,
-        builder: (context, snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasError) {
               return Center(
-                child: Text('Errore: ${snapshot.error}'),
+                child: Text(snapshot.error.toString()),
               );
             }
             return Container(
@@ -217,8 +214,7 @@ class _WidgetPageState extends State<WidgetPage> {
                     ],
                     radius: 0.9,
                     stops: [0.4, 0.9],
-                  )
-              ),
+                  )),
               child: Center(
                 child: Container(
                     child: TempSlider(
@@ -241,18 +237,34 @@ class _WidgetPageState extends State<WidgetPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(42.0),
                         child: Center(
-                            child: Text(timeToPrint,
+                          /*child: Text(timeToPrint,
                                 // To view the intervals values use the comment below.
                                 //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
                                 style: TextStyle(
-                                    fontSize: 18.0, color: Colors.black))),
+                                    fontSize: 18.0, color: Colors.black))),*/
+                          child: CustomPaint(painter: HourPainter(timeToPrint)),
+                        ),
                       ),
                     )),
               ),
             );
           } else {
-            return Center(
-              child: CircularProgressIndicator(),
+            return Container(
+              decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    colors: [
+                      Color.fromRGBO(0, 176, 237, 1),
+                      Color.fromRGBO(0, 176, 237, 0.3)
+                    ],
+                    radius: 0.9,
+                    stops: [0.4, 0.9],
+                  )),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
             );
           }
         },
@@ -305,7 +317,7 @@ class _WidgetPageState extends State<WidgetPage> {
     String binaryDay = _calculatesBinaryDay(
         newFirstTime, newSecondTime, newThirdTime, newFourthTime);
     // Send changes to the server.
-     RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
+    RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
       firstTime = newFirstTime;
@@ -317,8 +329,8 @@ class _WidgetPageState extends State<WidgetPage> {
 
   /// Returns the binary string representing the day configuration using the
   /// handlers' value([firstTime],[secondTime],[thirdTime],[fourthTime]).
-  String _calculatesBinaryDay(int firstTime, int secondTime, int thirdTime,
-      int fourthTime) {
+  String _calculatesBinaryDay(
+      int firstTime, int secondTime, int thirdTime, int fourthTime) {
     String binaryDay = '';
     for (int i = 0; i <= 95; i++) {
       if (_isIncluded(i, firstTime, (secondTime - 1) % 96)) {
@@ -342,8 +354,4 @@ class _WidgetPageState extends State<WidgetPage> {
     }
     return value >= prev && value <= succ;
   }
-
-
-
-
 }

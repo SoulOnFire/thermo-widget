@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/http_json_files/rest_client.dart';
+import '../lib/network_files/rest_client.dart';
 
 Map<String, String> tempMap = {
   '11': 'T3',
