@@ -232,7 +232,7 @@ class SliderPainter extends CustomPainter {
         pos = Offset(pos.dx - sliderStrokeWidth / 3 - adj,
             pos.dy - sliderStrokeWidth / 3 - adj);
         // Icon.
-        var icon = Icons.work; //Icons.brightness_3;
+        var icon = Icons.work;
         // TextPainter settings.
         textPainter.text = TextSpan(
             text: String.fromCharCode(icon.codePoint),
@@ -306,7 +306,7 @@ class SliderPainter extends CustomPainter {
         pos = Offset(pos.dx - sliderStrokeWidth / 3 - adj,
             pos.dy - sliderStrokeWidth / 3 - adj);
         // Icon.
-        var icon = Icons.brightness_3; //Icons.directions_car;
+        var icon = Icons.brightness_3;
         // TextPainter settings.
         textPainter.text = TextSpan(
             text: String.fromCharCode(icon.codePoint),

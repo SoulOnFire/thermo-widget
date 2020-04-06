@@ -60,10 +60,13 @@ List<int> _getTimes(String binaryString){
               t3Section['start'] = i ~/ 2;
             }
           }
-          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-            t3Section['finish'] = i ~/ 2;
-          } else if(i + 2 > (binaryString.length - 2)){
-            t3Section['finish'] = (binaryString.length - 2) ~/2;
+          if(t3Section['finish'] == null) {
+            if (i + 2 <= (binaryString.length - 2) &&
+                binaryString.substring(i + 2, i + 4) != quarter) {
+              t3Section['finish'] = i ~/ 2;
+            } else if (i + 2 > (binaryString.length - 2)) {
+              t3Section['finish'] = (binaryString.length - 2) ~/ 2;
+            }
           }
         } else {
           if(t3Section2['start'] == null){
@@ -77,10 +80,13 @@ List<int> _getTimes(String binaryString){
               t3Section2['start'] = i ~/ 2;
             }
           }
-          if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-            t3Section2['finish'] = i ~/ 2;
-          } else if(i + 2 > (binaryString.length - 2)){
-            t3Section2['finish'] = (binaryString.length - 2) ~/2;
+          if(t3Section2['finish'] == null) {
+            if (i + 2 <= (binaryString.length - 2) &&
+                binaryString.substring(i + 2, i + 4) != quarter) {
+              t3Section2['finish'] = i ~/ 2;
+            } else if (i + 2 > (binaryString.length - 2)) {
+              t3Section2['finish'] = (binaryString.length - 2) ~/ 2;
+            }
           }
         }
         break;
@@ -96,10 +102,13 @@ List<int> _getTimes(String binaryString){
             t2Section['start'] = i ~/ 2;
           }
         }
-        if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-          t2Section['finish'] = i ~/ 2;
-        } else if(i + 2 > (binaryString.length - 2)){
-          t2Section['finish'] = (binaryString.length - 2) ~/2;
+        if(t2Section['finish'] == null) {
+          if (i + 2 <= (binaryString.length - 2) &&
+              binaryString.substring(i + 2, i + 4) != quarter) {
+            t2Section['finish'] = i ~/ 2;
+          } else if (i + 2 > (binaryString.length - 2)) {
+            t2Section['finish'] = (binaryString.length - 2) ~/ 2;
+          }
         }
         break;
       case '01':
@@ -115,10 +124,13 @@ List<int> _getTimes(String binaryString){
           }
           t1Section['start'] = i ~/ 2;
         }
-        if(i + 2 <= (binaryString.length - 2) && binaryString.substring(i + 2, i + 4)!= quarter) {
-          t1Section['finish'] = i ~/ 2;
-        } else if(i + 2 > (binaryString.length - 2)){
-          t1Section['finish'] = (binaryString.length - 2) ~/2;
+        if(t1Section['finish'] == null) {
+          if (i + 2 <= (binaryString.length - 2) &&
+              binaryString.substring(i + 2, i + 4) != quarter) {
+            t1Section['finish'] = i ~/ 2;
+          } else if (i + 2 > (binaryString.length - 2)) {
+            t1Section['finish'] = (binaryString.length - 2) ~/ 2;
+          }
         }
         break;
     }
@@ -128,15 +140,15 @@ List<int> _getTimes(String binaryString){
   print('t2 section: ${t2Section.toString()}');
   print('t1 section: ${t1Section.toString()}');
   int firstTime, secondTime, thirdTime, fourthTime;
-  if((t3Section['finish'] + 1) % 96 == t1Section['start']) {
+  if((t3Section['finish'] + 1) % 96 == t2Section['start']) {
     firstTime = t3Section['start'];
     thirdTime = t3Section2['start'];
   } else {
     firstTime = t3Section2['start'];
     thirdTime = t3Section['start'];
   }
-  secondTime = t1Section['start'];
-  fourthTime = t2Section['start'];
+  secondTime = t2Section['start'];
+  fourthTime = t1Section['start'];
   return [firstTime, secondTime, thirdTime, fourthTime];
 }
 

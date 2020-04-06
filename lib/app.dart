@@ -336,11 +336,11 @@ class _WidgetPageState extends State<WidgetPage> {
       if (_isIncluded(i, firstTime, (secondTime - 1) % 96)) {
         binaryDay += '11';
       } else if (_isIncluded(i, secondTime, (thirdTime - 1) % 96)) {
-        binaryDay += '01';
+        binaryDay += '10';
       } else if (_isIncluded(i, thirdTime, (fourthTime - 1) % 96)) {
         binaryDay += '11';
       } else {
-        binaryDay += '10';
+        binaryDay += '01';
       }
     }
     return binaryDay;
