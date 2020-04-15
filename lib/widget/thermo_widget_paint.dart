@@ -5,25 +5,9 @@ import 'base_painter.dart';
 import 'slider_painter.dart';
 import 'utils.dart';
 
-/// Callback to be called when the user moves one of the handler or a section.
-///
-/// [a] is the handler #1 value, [b] is the handler #2 value
-/// [c] is the handler #3 value, [d] is the handler #4 value.
-typedef SelectionChanged<T> = void Function(T a, T b, T c, T d);
+enum WidgetMode { noLunch, lunch }
 
 class CircularSliderPaint extends StatefulWidget {
-  /// Value of the first handler.
-  final int firstValue;
-
-  /// Value of the second handler.
-  final int secondValue;
-
-  /// Value of the third handler.
-  final int thirdValue;
-
-  /// Value of the fourth handler.
-  final int fourthValue;
-
   /// Number of sectors in which the slider is divided(# of possible values on the slider).
   final int divisions;
 
@@ -33,11 +17,13 @@ class CircularSliderPaint extends StatefulWidget {
   /// Number of primary sectors in which the slider is divided(lines used to represent 15 minutes).
   final int secondarySectors;
 
+  final Map<int, Map<String, dynamic>> handlerValues;
+
   /// Callback to be used when the user moves one of the handler or a section. It provides new Handlers' values.
-  final SelectionChanged<int> onSelectionChange;
+  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionChange;
 
   /// Callback to be used when the user terminates the interaction with one handler or a section. It provides new Handlers' values.
-  final SelectionChanged<int> onSelectionEnd;
+  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionEnd;
 
   /// The color used for the base of the circle.
   final Color baseColor;
@@ -47,18 +33,6 @@ class CircularSliderPaint extends StatefulWidget {
 
   /// Color of lines which represent minutes.
   final Color minutesColor;
-
-  /// Color of the section between handler #1 and handler #2.
-  final Color section12Color;
-
-  /// Color of the section between handler #2 and handler #3.
-  final Color section23Color;
-
-  /// Color of the section between handler #3 and handler #4.
-  final Color section34Color;
-
-  /// Color of the section between handler #4 and handler #1.
-  final Color section41Color;
 
   /// Color of the handler.
   final Color handlerColor;
@@ -72,12 +46,20 @@ class CircularSliderPaint extends StatefulWidget {
   /// Width of the stroke which draws the circle.
   final double sliderStrokeWidth;
 
+  /// ------------------------------
+  final WidgetMode mode;
+
+  List<int> get intPositions {
+    // Creates a fixed-length list.
+    List<int> values = List<int>(handlerValues.length);
+    handlerValues.forEach((handlerNumber, info) => values[handlerNumber - 1 ] = info['value']);
+    return values;
+  }
+
   CircularSliderPaint({
+    @required this.mode,
     @required this.divisions,
-    @required this.firstValue,
-    @required this.secondValue,
-    @required this.thirdValue,
-    @required this.fourthValue,
+    @required this.handlerValues,
     this.child,
     @required this.primarySectors,
     @required this.secondarySectors,
@@ -86,10 +68,6 @@ class CircularSliderPaint extends StatefulWidget {
     @required this.baseColor,
     @required this.hoursColor,
     @required this.minutesColor,
-    @required this.section12Color,
-    @required this.section23Color,
-    @required this.section34Color,
-    @required this.section41Color,
     @required this.handlerColor,
     @required this.handlerOutterRadius,
     @required this.sliderStrokeWidth,
@@ -100,18 +78,6 @@ class CircularSliderPaint extends StatefulWidget {
 }
 
 class _CircularSliderState extends State<CircularSliderPaint> {
-  /// Inform if the user is using handler #1.
-  bool _isFirstHandlerSelected = false;
-
-  /// Inform if the user is using handler #2.
-  bool _isSecondHandlerSelected = false;
-
-  /// Inform if the user is using handler #3.
-  bool _isThirdHandlerSelected = false;
-
-  /// Inform if the user is using handler #4.
-  bool _isFourthHandlerSelected = false;
-
   /// Paints handlers and sections between handlers.
   SliderPainter _painter;
 
@@ -145,22 +111,30 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   int _differenceFromInitPoint;
 
   /// Used in handlePan() to know if we are moving a handler or an entire section.
-  bool get isBothHandlersSelected =>
-      (_isSecondHandlerSelected && _isFirstHandlerSelected) ||
-          (_isThirdHandlerSelected && _isSecondHandlerSelected) ||
-          (_isFourthHandlerSelected && _isThirdHandlerSelected) ||
-          (_isFirstHandlerSelected && _isFourthHandlerSelected);
+  bool get isBothHandlersSelected {
+    for (int i = 0; i < isHandlerSelected.length; i++) {
+      if (isHandlerSelected[i] &&
+          isHandlerSelected[(i + 1) % isHandlerSelected.length]) return true;
+    }
+    return false;
+  }
 
   /// Used in onPanDown() to check if the user is clicking in a section.
-  bool get isNoHandlersSelected =>
-      !_isSecondHandlerSelected &&
-          !_isFirstHandlerSelected &&
-          !_isThirdHandlerSelected &&
-          !_isFourthHandlerSelected;
+  bool get isNoHandlerSelected {
+    for (bool handlerSelected in isHandlerSelected) {
+      if (handlerSelected) return false;
+    }
+    return true;
+  }
+
+  List<bool> isHandlerSelected = [];
 
   @override
   void initState() {
     super.initState();
+    for (int i = 0; i < widget.handlerValues.length; i++) {
+      isHandlerSelected.add(false);
+    }
     _calculatePaintData(null, [4, 3, 2, 1]);
   }
 
@@ -181,17 +155,14 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     super.didUpdateWidget(oldWidget);
     // Any widget can be updated thousands of time with no change so to modify it
     // we need to check if there are changes.
-    if (oldWidget.firstValue != widget.firstValue ||
-        oldWidget.secondValue != widget.secondValue ||
-        oldWidget.thirdValue != widget.thirdValue ||
-        oldWidget.fourthValue != widget.fourthValue) {
-      // If configuration is changed repaint the handlers.
-      _calculatePaintData([
-        oldWidget.firstValue,
-        oldWidget.secondValue,
-        oldWidget.thirdValue,
-        oldWidget.fourthValue,
-      ], _painter.printingOrder);
+    List<int> oldValues = oldWidget.intPositions;
+    List<int> newValues = widget.intPositions;
+    for (int i = 0; i < oldValues.length; i++) {
+      if(oldValues[i] != newValues[i]) {
+        // If configuration is changed repaint the handlers.
+        _calculatePaintData(oldValues, _painter.printingOrder);
+        return;
+      }
     }
   }
 
@@ -201,13 +172,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     return RawGestureDetector(
       gestures: <Type, GestureRecognizerFactory>{
         CustomPanGestureRecognizer:
-        GestureRecognizerFactoryWithHandlers<CustomPanGestureRecognizer>(
-              () => CustomPanGestureRecognizer(
+            GestureRecognizerFactoryWithHandlers<CustomPanGestureRecognizer>(
+          () => CustomPanGestureRecognizer(
             onPanDown: _onPanDown,
             onPanUpdate: _onPanUpdate,
             onPanEnd: _onPanEnd,
           ),
-              (CustomPanGestureRecognizer instance) {},
+          (CustomPanGestureRecognizer instance) {},
         ),
       },
       child: CustomPaint(
@@ -283,6 +254,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     _sweepAngle41 = percentageToRadians(sweep4.abs());
     // Creates the slider painter that will paints handlers.
     _painter = SliderPainter(
+      mode: widget.mode,
       firstAngle: _firstAngle,
       secondAngle: _secondAngle,
       thirdAngle: _thirdAngle,
@@ -311,10 +283,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   ///
   /// [details] Coordinates of the pan.
   void _onPanUpdate(Offset details) {
-    if (!_isFirstHandlerSelected &&
-        !_isSecondHandlerSelected &&
-        !_isThirdHandlerSelected &&
-        !_isFourthHandlerSelected) {
+    if (isNoHandlerSelected) {
       // No handler is selected so the pan interaction is trash.
       return;
     }
@@ -333,10 +302,9 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     // Handles the last pan interaction.
     _handlePan(details, true);
     // Handlers are no longer selected.
-    _isFirstHandlerSelected = false;
-    _isSecondHandlerSelected = false;
-    _isThirdHandlerSelected = false;
-    _isFourthHandlerSelected = false;
+    for(int i = 0; i < isHandlerSelected.length; i++){
+      isHandlerSelected[i] = false;
+    }
   }
 
   /// Handles the pan (tap)
@@ -360,14 +328,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // Calculates new value for handler #1.
         var newFirstValue =
             (newValue - _differenceFromInitPoint) % widget.divisions;
-        if(isPanEnd){
+        if (isPanEnd) {
           // We invoke onSelectionEnd with the same values because
           // newFirstValue != widget.firstValue) is always false, this due to the fact
           // that values were update by the before handlePan call.
-          widget.onSelectionEnd(
-              widget.firstValue, widget.secondValue, widget.thirdValue, widget.fourthValue);
-        }
-        else if (newFirstValue != widget.firstValue) {
+          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
+              widget.thirdValue, widget.fourthValue);
+        } else if (newFirstValue != widget.firstValue) {
           // Handler #1 is at a different position so update all the values.
           var diff = newFirstValue - widget.firstValue;
           var newSecondValue = (widget.secondValue + diff) % widget.divisions;
@@ -380,14 +347,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // The user is moving the section between handler #2 and #3.
         var newSecondValue =
             (newValue - _differenceFromInitPoint) % widget.divisions;
-        if(isPanEnd){
+        if (isPanEnd) {
           // We invoke onSelectionEnd with the same values because
           // newSecondValue != widget.secondValue) is always false, this due to the fact
           // that values were update by the before handlePan call.
-          widget.onSelectionEnd(
-              widget.firstValue, widget.secondValue, widget.thirdValue, widget.fourthValue);
-        }
-        else if (newSecondValue != widget.secondValue) {
+          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
+              widget.thirdValue, widget.fourthValue);
+        } else if (newSecondValue != widget.secondValue) {
           // Handler #2 is at a different position so update all the values.
           var diff = newSecondValue - widget.secondValue;
           var newThirdValue = (widget.thirdValue + diff) % widget.divisions;
@@ -400,14 +366,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // The user is moving the section between handler #3 and #4.
         var newThirdValue =
             (newValue - _differenceFromInitPoint) % widget.divisions;
-        if(isPanEnd){
+        if (isPanEnd) {
           // We invoke onSelectionEnd with the same values because
           // newThirdValue != widget.thirdValue) is always false, this due to the fact
           // that values were update by the before handlePan call.
-          widget.onSelectionEnd(
-              widget.firstValue, widget.secondValue, widget.thirdValue, widget.fourthValue);
-        }
-        else if (newThirdValue != widget.thirdValue) {
+          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
+              widget.thirdValue, widget.fourthValue);
+        } else if (newThirdValue != widget.thirdValue) {
           // Handler #3 is at a different position so update all the values.
           var diff = newThirdValue - widget.thirdValue;
           var newFourthValue = (widget.fourthValue + diff) % widget.divisions;
@@ -420,14 +385,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // The user is moving the section between handler #4 and #1.
         var newFourthValue =
             (newValue - _differenceFromInitPoint) % widget.divisions;
-        if(isPanEnd){
+        if (isPanEnd) {
           // We invoke onSelectionEnd with the same values because
           // newFourthValue != widget.fourthValue) is always false, this due to the fact
           // that values were update by the before handlePan call.
-          widget.onSelectionEnd(
-              widget.firstValue, widget.secondValue, widget.thirdValue, widget.fourthValue);
-        }
-        else if (newFourthValue != widget.fourthValue) {
+          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
+              widget.thirdValue, widget.fourthValue);
+        } else if (newFourthValue != widget.fourthValue) {
           // Handler #4 is at a different position so update all the values.
           var diff = newFourthValue - widget.fourthValue;
           var newFirstValue = (widget.firstValue + diff) % widget.divisions;
@@ -519,13 +483,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     // Check if one of the handlers has been selected.
     // Calculates the distances between the tap point and the center of the handlers.
     var distFirst =
-    distanceBetweenPoints(position, _painter.firstHandlerCenter);
+        distanceBetweenPoints(position, _painter.firstHandlerCenter);
     var distSecond =
-    distanceBetweenPoints(position, _painter.secondHandlerCenter);
+        distanceBetweenPoints(position, _painter.secondHandlerCenter);
     var distThird =
-    distanceBetweenPoints(position, _painter.thirdHandlerCenter);
+        distanceBetweenPoints(position, _painter.thirdHandlerCenter);
     var distFourth =
-    distanceBetweenPoints(position, _painter.fourthHandlerCenter);
+        distanceBetweenPoints(position, _painter.fourthHandlerCenter);
     // Check which distance is the smallest one.
     if (distFirst <= distSecond &&
         distFirst <= distThird &&

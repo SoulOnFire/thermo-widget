@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:thermo_widget/widget/thermo_widget_paint.dart';
 
 import 'utils.dart';
 
@@ -104,7 +105,10 @@ class SliderPainter extends CustomPainter {
   /// Number of sectors in which the slider is divided(# of possible values on the slider).
   int divisions;
 
+  WidgetMode mode;
+
   SliderPainter({
+    @required this.mode,
     @required this.firstAngle,
     @required this.sweepAngle12,
     @required this.secondAngle,

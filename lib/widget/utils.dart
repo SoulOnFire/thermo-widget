@@ -1,6 +1,11 @@
 import 'dart:math';
 import 'dart:ui';
 
+/// Callback to be called when the user moves one of the handler or a section.
+///
+/// [map] is a Map<int, Map<String, dynamic
+typedef SelectionChanged<T> = void Function(T map);
+
 /// Const representing the space between Canvas borders and the slider.
 ///
 /// This distance is needed to allow handlers' gestures recognition.

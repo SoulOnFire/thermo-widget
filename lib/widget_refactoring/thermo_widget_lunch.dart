@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:thermo_widget/widget/utils.dart';
 
-import 'thermo_widget_paint.dart';
+import '../widget/thermo_widget_paint.dart';
 
 /// Returns a widget which displays a circle to be used as a slider.
 ///
@@ -11,7 +11,7 @@ import 'thermo_widget_paint.dart';
 /// changes one of the sections or one of the handlers.
 /// The rest of the params are used to change the look and feel.
 ///
-class TempSlider extends StatefulWidget {
+class TempSliderLunch extends StatefulWidget {
   /// /// Number of sectors in which the slider is divided(# of possible values on the slider)
   /// Max value is 300.
   final int divisions;
@@ -20,7 +20,7 @@ class TempSlider extends StatefulWidget {
   /// and the other map is <propertyName, value>
   /// - temperature => int
   /// - color => Color
-  final Map<int, Map<String, dynamic>> handlerValues;
+  final Map<String, Map<String, dynamic>> handlerValues;
 
   /// The number of primary sectors to be painted.
   final int primarySectors;
@@ -46,28 +46,16 @@ class TempSlider extends StatefulWidget {
   /// Color of lines which represent minutes(secondarySectors).
   final Color minutesColor;
 
-  /// Color of the section between handler #1 and handler #2.
-  final Color section12Color;
-
-  /// Color of the section between handler #2 and handler #3.
-  final Color section23Color;
-
-  /// Color of the section between handler #3 and handler #4.
-  final Color section34Color;
-
-  /// Color of the section between handler #4 and handler #1.
-  final Color section41Color;
-
   /// Color of the handlers.
   final Color handlerColor;
 
   /// Function called when at least one of firstValue,secondValue,thirdValue,fourthValue changes.
   /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionChange;
+  final SelectionChanged<int> onSelectionChange;
 
   /// Function called when the user stop changing firstValue,secondValue,thirdValue,fourthValue values.
   /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionEnd;
+  final SelectionChanged<int> onSelectionEnd;
 
   /// Radius of the outter circle of the handler.
   final double handlerOutterRadius;
@@ -75,10 +63,10 @@ class TempSlider extends StatefulWidget {
   /// Stroke width for the slider.
   final double sliderStrokeWidth;
 
-
-  TempSlider(
+  TempSliderLunch(
       this.divisions,
-      this.handlerValues, {
+      this.handlerValues,
+      {
         this.height,
         this.width,
         this.child,
@@ -87,10 +75,6 @@ class TempSlider extends StatefulWidget {
         this.baseColor,
         this.hoursColor,
         this.minutesColor,
-        this.section12Color,
-        this.section23Color,
-        this.section34Color,
-        this.section41Color,
         this.handlerColor,
         this.onSelectionChange,
         this.onSelectionEnd,
@@ -100,12 +84,12 @@ class TempSlider extends StatefulWidget {
         'divisions has to be >= 0 and <= 300');
 
   @override
-  _TempSliderState createState() => _TempSliderState();
+  _TempSliderLunchState createState() => _TempSliderLunchState();
 }
 
-class _TempSliderState extends State<TempSlider> {
+class _TempSliderLunchState extends State<TempSliderLunch> {
 
-  Map<int, Map<String, dynamic>> _handlerValues;
+  Map<String, Map<String, dynamic>> _handlerValues;
 
   /// Set the initial state of the widget.
   @override
@@ -120,26 +104,29 @@ class _TempSliderState extends State<TempSlider> {
         height: widget.height ?? 300.0,
         width: widget.width ?? 300.0,
         child: CircularSliderPaint(
-          mode: WidgetMode.noLunch,
+          mode: WidgetMode.lunch,
           handlerValues: _handlerValues,
           divisions: widget.divisions,
           primarySectors: widget.primarySectors ?? 0,
           secondarySectors: widget.secondarySectors ?? 0,
           child: widget.child,
-          onSelectionChange: (newMap) {
+          onSelectionChange: (newFirst, newSecond, newThird, newForth) {
             if (widget.onSelectionChange != null) {
               // If the caller passed a callback executes it.
-              widget.onSelectionChange(newMap);
+              widget.onSelectionChange(newFirst, newSecond, newThird, newForth);
             }
             setState(() {
               // Updates the widget values.
-              _handlerValues = newMap;
+              _firstValue = newFirst;
+              _secondValue = newSecond;
+              _thirdValue = newThird;
+              _fourthValue = newForth;
             });
           },
-          onSelectionEnd: (newMap) {
+          onSelectionEnd: (newFirst, newSecond, newThird, newFourth) {
             if (widget.onSelectionEnd != null) {
               // If the caller passed a callback executes it.
-              widget.onSelectionEnd(newMap);
+              widget.onSelectionEnd(newFirst, newSecond, newThird, newFourth);
             }
           },
           sliderStrokeWidth: widget.sliderStrokeWidth == null ||
@@ -150,6 +137,10 @@ class _TempSliderState extends State<TempSlider> {
           baseColor: widget.baseColor ?? Color.fromRGBO(255, 255, 255, 0.1),
           hoursColor: widget.hoursColor ?? Color.fromRGBO(255, 255, 255, 0.3),
           minutesColor: widget.minutesColor ?? Colors.white30,
+          section12Color: widget.section12Color ?? Colors.amber,
+          section23Color: widget.section23Color ?? Colors.deepPurpleAccent,
+          section34Color: widget.section34Color ?? Colors.amber,
+          section41Color: widget.section41Color ?? Colors.brown[400],
           handlerColor: widget.handlerColor ?? Colors.white,
           handlerOutterRadius: widget.handlerOutterRadius ?? 22.0,
         ));

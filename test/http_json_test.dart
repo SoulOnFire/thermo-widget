@@ -1,12 +1,5 @@
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-Map<String, String> tempMap = {
-  '11': 'T3',
-  '10': 'T2',
-  '01': 'T1',
-  '00': 'T0',
-};
 
 String hexToBinary(String hexString) {
   String binaryString = '';
@@ -38,7 +31,36 @@ String binaryToHex(String binaryString) {
 
 void main() {
   group('Alcuni test JSON e HTTP', () {
-    test('Test importazione e intepretazione stringa del giorno', (){
+    test('test uso Mappe', () {
+      Map<int, Map<String, dynamic>> mappa = {
+        3 : {
+          'value' : 36,
+          'color': Colors.deepPurple,
+          'temp': 'T3',
+        },
+        2 : {
+          'value' : 24,
+          'color': Colors.white,
+          'temp': 'T2',
+        },
+        1 : {
+          'value' : 6,
+          'color': Colors.brown,
+          'temp': 'T1',
+        },
+        4 : {
+          'value' : 64,
+          'color': Colors.green,
+          'temp': 'T3',
+        }
+      };
+
+      // Creates a fixed-length list
+      List<int> creata = new List<int>(mappa.length);
+      mappa.forEach((handlerNumber, info) => creata[handlerNumber - 1] = info['value']);
+      print(creata);
+    });
+    /*test('Test importazione e intepretazione stringa del giorno', (){
       // T3 => 11
       // T2 => 10
       // T1 => 01
@@ -153,6 +175,7 @@ void main() {
       print('Length: ${tempString.length}, String: $tempString');
 
     });
+     */
     /*test('Test Token factory', () async {
       try {
         var httpResponse = await http.post(
