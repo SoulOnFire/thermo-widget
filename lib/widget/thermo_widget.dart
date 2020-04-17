@@ -63,11 +63,11 @@ class TempSlider extends StatefulWidget {
 
   /// Function called when at least one of firstValue,secondValue,thirdValue,fourthValue changes.
   /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionChange;
+  final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionChange;
 
   /// Function called when the user stop changing firstValue,secondValue,thirdValue,fourthValue values.
   /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionEnd;
+  final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionEnd;
 
   /// Radius of the outter circle of the handler.
   final double handlerOutterRadius;

@@ -20,10 +20,10 @@ class CircularSliderPaint extends StatefulWidget {
   final Map<int, Map<String, dynamic>> handlerValues;
 
   /// Callback to be used when the user moves one of the handler or a section. It provides new Handlers' values.
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionChange;
+  final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionChange;
 
   /// Callback to be used when the user terminates the interaction with one handler or a section. It provides new Handlers' values.
-  final SelectionChanged<Map<String, Map<String, dynamic>>> onSelectionEnd;
+  final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionEnd;
 
   /// The color used for the base of the circle.
   final Color baseColor;
@@ -52,7 +52,7 @@ class CircularSliderPaint extends StatefulWidget {
   List<int> get intPositions {
     // Creates a fixed-length list.
     List<int> values = List<int>(handlerValues.length);
-    handlerValues.forEach((handlerNumber, info) => values[handlerNumber - 1 ] = info['value']);
+    handlerValues.forEach((handlerNumber, info) => values[handlerNumber] = info['value']);
     return values;
   }
 
@@ -81,29 +81,17 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   /// Paints handlers and sections between handlers.
   SliderPainter _painter;
 
-  /// Angle in radians where we need to locate the handler #1.
-  double _firstAngle;
+  /// Angles in radians where we need to locate each handler.
+  ///
+  /// _angles[i] contains the position of the handler #i.
+  List<double> _angles;
 
-  /// Angle in radians where we need to locate the handler #2.
-  double _secondAngle;
+  /// Absolute angles in radians representing the section between two handlers.
+  ///
+  /// _sweepAngles[i] contains the sweep angle between hanbdler #i and
+  /// handler #(i+1) % _sweepAngles.length
+  List<double> _sweepAngles;
 
-  /// Angle in radians where we need to locate the handler #3.
-  double _thirdAngle;
-
-  /// Angle in radians where we need to locate the handler #4.
-  double _fourthAngle;
-
-  /// Absolute angle in radians representing the section between handler #1 and #2.
-  double _sweepAngle12;
-
-  /// Absolute angle in radians representing the section between handler #2 and #3.
-  double _sweepAngle23;
-
-  /// Absolute angle in radians representing the section between handler #3 and #4.
-  double _sweepAngle34;
-
-  /// Absolute angle in radians representing the section between handler #4 and #1.
-  double _sweepAngle41;
 
   /// In case we want to move the whole selection by clicking in the slider
   /// this will capture the position in the selection relative to the initial
@@ -135,7 +123,12 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     for (int i = 0; i < widget.handlerValues.length; i++) {
       isHandlerSelected.add(false);
     }
-    _calculatePaintData(null, [4, 3, 2, 1]);
+    // Creates a non-fixed length list.
+    List<int> initOrder = [];
+    for(int i = 0; i < widget.handlerValues.length; i++){
+      initOrder.add(widget.handlerValues.length - (i + 1));
+    }
+    _calculatePaintData(null, initOrder);
   }
 
   // We need to update this widget both with gesture detector but
@@ -199,82 +192,61 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     );
   }
 
-  /// Calculate all the new handlers and sweep angles' values and paints handlers.
+  bool areEqualValues(List<int> oldValues, List<int> newValues){
+    for(int i = 0; i < oldValues.length; i++) {
+      if(oldValues[i] != newValues[i]) return false;
+    }
+    return true;
+  }
+
+  /// Calculates all the new handlers and sweep angles' values and paints handlers.
   ///
   /// [oldValues] List containing old values of the handlers.
   /// [oldOrder] List containing the previous order with which the handlers were printed.
   void _calculatePaintData(List<int> oldValues, List<int> oldOrder) {
     List<int> printingOrder = oldOrder;
-    if (oldValues != null &&
-        !(oldValues[0] != widget.firstValue &&
-            oldValues[1] != widget.secondValue &&
-            oldValues[2] != widget.thirdValue &&
-            oldValues[3] != widget.fourthValue)) {
-      if (oldValues[0] != widget.firstValue) {
-        // We keep the same order of before but we print for last the handler# 1,
-        // so we it will be displayed foreground.
-        printingOrder.remove(1);
-        printingOrder.add(1);
-      } else if (oldValues[1] != widget.secondValue) {
-        // We keep the same order of before but we print for last the handler# 2,
-        // so we it will be displayed foreground.
-        printingOrder.remove(2);
-        printingOrder.add(2);
-      } else if (oldValues[2] != widget.thirdValue) {
-        // We keep the same order of before but we print for last the handler# 3,
-        // so we it will be displayed foreground.
-        printingOrder.remove(3);
-        printingOrder.add(3);
-      } else if (oldValues[3] != widget.fourthValue) {
-        // We keep the same order of before but we print for last the handler# 4,
-        // so we it will be displayed foreground.
-        printingOrder.remove(4);
-        printingOrder.add(4);
+    List<int> intPositions = widget.intPositions;
+
+    if (oldValues != null && !areEqualValues(oldValues, intPositions)) {
+      // The user moved only one handler.
+      for(int i = 0; i < oldValues.length; i++) {
+        if(oldValues[i] != intPositions[i]){
+          // We keep the same order of before but we print for last the handler# 1,
+          // so we it will be displayed foreground.
+          printingOrder.remove(i);
+          printingOrder.add(i);
+          // We already found the selected handler so, stop the loop.
+          break;
+        }
       }
     }
-    // Converts int values to percentage values.
-    var firstPercent = valueToPercentage(widget.firstValue, widget.divisions);
-    var secondPercent = valueToPercentage(widget.secondValue, widget.divisions);
-    var thirdPercent = valueToPercentage(widget.thirdValue, widget.divisions);
-    var fourthPercent = valueToPercentage(widget.fourthValue, widget.divisions);
-    // Calculates the sweep angles using percentages.
-    var sweep = getSweepAngle(firstPercent, secondPercent);
-    var sweep2 = getSweepAngle(secondPercent, thirdPercent);
-    var sweep3 = getSweepAngle(thirdPercent, fourthPercent);
-    var sweep4 = getSweepAngle(fourthPercent, firstPercent);
-    // Converts the angle from percentage to radians.
-    _firstAngle = percentageToRadians(firstPercent);
-    _secondAngle = percentageToRadians(secondPercent);
-    _thirdAngle = percentageToRadians(thirdPercent);
-    _fourthAngle = percentageToRadians(fourthPercent);
-    // Converts the sweep angles from percentage to radians.
-    _sweepAngle12 = percentageToRadians(sweep.abs());
-    _sweepAngle23 = percentageToRadians(sweep2.abs());
-    _sweepAngle34 = percentageToRadians(sweep3.abs());
-    _sweepAngle41 = percentageToRadians(sweep4.abs());
+
+    // Reset angles coordinates and sweep angles.
+    _angles = [];
+    _sweepAngles = [];
+    // Calculates angles coordinates.
+    for(int i = 0; i < intPositions.length; i++) {
+      // Converts int position into percentage position for handler #i and the next one.
+      double percent = valueToPercentage(intPositions[i], widget.divisions);
+      double nextPercent = valueToPercentage(intPositions[(i + 1) % intPositions.length], widget.divisions);
+      // Calculates the sweep angle using percentages.
+      double sweep = getSweepAngle(percent, nextPercent);
+      // Adds the angle #i coordinate.
+      _angles.add(percentageToRadians(percent));
+      // Adds the sweep angle between handler #i and next handler.
+      _sweepAngles.add(percentageToRadians(sweep.abs()));
+    }
+
     // Creates the slider painter that will paints handlers.
     _painter = SliderPainter(
       mode: widget.mode,
-      firstAngle: _firstAngle,
-      secondAngle: _secondAngle,
-      thirdAngle: _thirdAngle,
-      fourthAngle: _fourthAngle,
-      sweepAngle12: _sweepAngle12,
-      sweepAngle23: _sweepAngle23,
-      sweepAngle34: _sweepAngle34,
-      sweepAngle41: _sweepAngle41,
-      section12Color: widget.section12Color,
-      section23Color: widget.section23Color,
-      section34Color: widget.section34Color,
-      section41Color: widget.section41Color,
+      angles: _angles,
+      sweepAngles: _sweepAngles,
+      handlerValues: widget.handlerValues,
       handlerColor: widget.handlerColor,
       handlerOutterRadius: widget.handlerOutterRadius,
       sliderStrokeWidth: widget.sliderStrokeWidth,
       printingOrder: printingOrder,
-      firstValue: widget.firstValue,
-      secondValue: widget.secondValue,
-      thirdValue: widget.thirdValue,
-      fourthValue: widget.fourthValue,
       divisions: widget.divisions,
     );
   }
@@ -319,136 +291,58 @@ class _CircularSliderState extends State<CircularSliderPaint> {
 
     var angle = coordinatesToRadians(_painter.center, position);
     var percentage = radiansToPercentage(angle);
-    // Int value on the slider representing the new value of the handler.
+    // Int value on the slider representing the value of the tap.
     var newValue = percentageToValue(percentage, widget.divisions);
+    // Old handler positions.
+    List<int> intPositions = widget.intPositions;
+
     if (isBothHandlersSelected) {
+
+      int newHandlerValue = (newValue - _differenceFromInitPoint) % widget.divisions;
+
+
       // The user is dragging a section between two handlers.
-      if (_isSecondHandlerSelected && _isFirstHandlerSelected) {
-        // The user is moving the section between handler #1 and #2.
-        // Calculates new value for handler #1.
-        var newFirstValue =
-            (newValue - _differenceFromInitPoint) % widget.divisions;
-        if (isPanEnd) {
-          // We invoke onSelectionEnd with the same values because
-          // newFirstValue != widget.firstValue) is always false, this due to the fact
-          // that values were update by the before handlePan call.
-          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
-              widget.thirdValue, widget.fourthValue);
-        } else if (newFirstValue != widget.firstValue) {
-          // Handler #1 is at a different position so update all the values.
-          var diff = newFirstValue - widget.firstValue;
-          var newSecondValue = (widget.secondValue + diff) % widget.divisions;
-          var newThirdValue = (widget.thirdValue + diff) % widget.divisions;
-          var newFourthValue = (widget.fourthValue + diff) % widget.divisions;
-          widget.onSelectionChange(
-              newFirstValue, newSecondValue, newThirdValue, newFourthValue);
-        }
-      } else if (_isThirdHandlerSelected && _isSecondHandlerSelected) {
-        // The user is moving the section between handler #2 and #3.
-        var newSecondValue =
-            (newValue - _differenceFromInitPoint) % widget.divisions;
-        if (isPanEnd) {
-          // We invoke onSelectionEnd with the same values because
-          // newSecondValue != widget.secondValue) is always false, this due to the fact
-          // that values were update by the before handlePan call.
-          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
-              widget.thirdValue, widget.fourthValue);
-        } else if (newSecondValue != widget.secondValue) {
-          // Handler #2 is at a different position so update all the values.
-          var diff = newSecondValue - widget.secondValue;
-          var newThirdValue = (widget.thirdValue + diff) % widget.divisions;
-          var newFourthValue = (widget.fourthValue + diff) % widget.divisions;
-          var newFirstValue = (widget.firstValue + diff) % widget.divisions;
-          widget.onSelectionChange(
-              newFirstValue, newSecondValue, newThirdValue, newFourthValue);
-        }
-      } else if (_isFourthHandlerSelected && _isThirdHandlerSelected) {
-        // The user is moving the section between handler #3 and #4.
-        var newThirdValue =
-            (newValue - _differenceFromInitPoint) % widget.divisions;
-        if (isPanEnd) {
-          // We invoke onSelectionEnd with the same values because
-          // newThirdValue != widget.thirdValue) is always false, this due to the fact
-          // that values were update by the before handlePan call.
-          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
-              widget.thirdValue, widget.fourthValue);
-        } else if (newThirdValue != widget.thirdValue) {
-          // Handler #3 is at a different position so update all the values.
-          var diff = newThirdValue - widget.thirdValue;
-          var newFourthValue = (widget.fourthValue + diff) % widget.divisions;
-          var newFirstValue = (widget.firstValue + diff) % widget.divisions;
-          var newSecondValue = (widget.secondValue + diff) % widget.divisions;
-          widget.onSelectionChange(
-              newFirstValue, newSecondValue, newThirdValue, newFourthValue);
-        }
-      } else {
-        // The user is moving the section between handler #4 and #1.
-        var newFourthValue =
-            (newValue - _differenceFromInitPoint) % widget.divisions;
-        if (isPanEnd) {
-          // We invoke onSelectionEnd with the same values because
-          // newFourthValue != widget.fourthValue) is always false, this due to the fact
-          // that values were update by the before handlePan call.
-          widget.onSelectionEnd(widget.firstValue, widget.secondValue,
-              widget.thirdValue, widget.fourthValue);
-        } else if (newFourthValue != widget.fourthValue) {
-          // Handler #4 is at a different position so update all the values.
-          var diff = newFourthValue - widget.fourthValue;
-          var newFirstValue = (widget.firstValue + diff) % widget.divisions;
-          var newSecondValue = (widget.secondValue + diff) % widget.divisions;
-          var newThirdValue = (widget.thirdValue + diff) % widget.divisions;
-          widget.onSelectionChange(
-              newFirstValue, newSecondValue, newThirdValue, newFourthValue);
+      for(int i = 0; i < isHandlerSelected.length; i++) {
+        if(isHandlerSelected[i] && isHandlerSelected[(i + 1) % isHandlerSelected.length]) {
+          if (isPanEnd) {
+            // We invoke onSelectionEnd with the same values because
+            // newFirstValue != widget.firstValue) is always false, this due to the fact
+            // that values were update by the before handlePan call.
+            widget.onSelectionEnd(widget.handlerValues);
+          } else if(newHandlerValue != intPositions[i]) {
+            // Handler is in a different position so update handler values.
+            int diff = newHandlerValue - intPositions[i];
+            var newMap = widget.handlerValues;
+            newMap.forEach((handlerNumber, info){
+              // Updates all handler values.
+              newMap[handlerNumber]['value'] = (newMap[handlerNumber]['value'] + diff) % widget.divisions;
+            });
+            // Invokes callback with new handler values.
+            widget.onSelectionChange(newMap);
+          }
+          // No need to manage singular handlers.
+          return;
         }
       }
-      // No need to manage singular handlers.
-      return;
     }
-    // Only one handler is selected
-    if (_isFirstHandlerSelected) {
-      if (!_isInRange(newValue, widget.fourthValue, widget.secondValue)) {
-        // If newValue is not allowed for handler #1 resets its previous value.
-        newValue = widget.firstValue;
-      }
-      widget.onSelectionChange(
-          newValue, widget.secondValue, widget.thirdValue, widget.fourthValue);
-      if (isPanEnd) {
-        widget.onSelectionEnd(newValue, widget.secondValue, widget.thirdValue,
-            widget.fourthValue);
-      }
-    } else if (_isSecondHandlerSelected) {
-      if (!_isInRange(newValue, widget.firstValue, widget.thirdValue)) {
-        // If newValue is not allowed for handler #2 resets its previous value.
-        newValue = widget.secondValue;
-      }
-      widget.onSelectionChange(
-          widget.firstValue, newValue, widget.thirdValue, widget.fourthValue);
-      if (isPanEnd) {
-        widget.onSelectionEnd(
-            widget.firstValue, newValue, widget.thirdValue, widget.fourthValue);
-      }
-    } else if (_isThirdHandlerSelected) {
-      if (!_isInRange(newValue, widget.secondValue, widget.fourthValue)) {
-        // If newValue is not allowed for handler #3 resets its previous value.
-        newValue = widget.thirdValue;
-      }
-      widget.onSelectionChange(
-          widget.firstValue, widget.secondValue, newValue, widget.fourthValue);
-      if (isPanEnd) {
-        widget.onSelectionEnd(widget.firstValue, widget.secondValue, newValue,
-            widget.fourthValue);
-      }
-    } else {
-      //_isFourthHandlerSelected == true
-      if (!_isInRange(newValue, widget.thirdValue, widget.firstValue)) {
-        // If newValue is not allowed for handler #4 resets its previous value.
-        newValue = widget.fourthValue;
-      }
-      widget.onSelectionChange(
-          widget.firstValue, widget.secondValue, widget.thirdValue, newValue);
-      if (isPanEnd) {
-        widget.onSelectionEnd(
-            widget.firstValue, widget.secondValue, widget.thirdValue, newValue);
+
+    // Only one handler is selected.
+    for(int i = 0; i < isHandlerSelected.length; i++) {
+      if(isHandlerSelected[i]) {
+        // Handler #i is selected.
+        if(!_isInRange(newValue, intPositions[(i - 1) % intPositions.length], intPositions[(i + 1) % intPositions.length] )){
+          // If newValue is not allowed for handler #i resets its previous value.
+          newValue = intPositions[i];
+        }
+        // Updates handler #i value(or doesn't if !_isInRange).
+        var newMap = widget.handlerValues;
+        newMap[i]['value'] = newValue;
+        widget.onSelectionChange(newMap);
+        if (isPanEnd) {
+          // User stopped interaction.
+          widget.onSelectionEnd(newMap);
+        }
+        return;
       }
     }
   }
@@ -480,6 +374,11 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     if (position == null) {
       return false;
     }
+    /// -----
+    // Fixed length List.
+    List<double> distancesHandler = List(isHandlerSelected.length);
+    /// -----
+
     // Check if one of the handlers has been selected.
     // Calculates the distances between the tap point and the center of the handlers.
     var distFirst =

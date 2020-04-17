@@ -33,22 +33,22 @@ void main() {
   group('Alcuni test JSON e HTTP', () {
     test('test uso Mappe', () {
       Map<int, Map<String, dynamic>> mappa = {
-        3 : {
+        2 : {
           'value' : 36,
           'color': Colors.deepPurple,
           'temp': 'T3',
         },
-        2 : {
+        1 : {
           'value' : 24,
           'color': Colors.white,
           'temp': 'T2',
         },
-        1 : {
+        0 : {
           'value' : 6,
           'color': Colors.brown,
           'temp': 'T1',
         },
-        4 : {
+        3 : {
           'value' : 64,
           'color': Colors.green,
           'temp': 'T3',
@@ -57,9 +57,16 @@ void main() {
 
       // Creates a fixed-length list
       List<int> creata = new List<int>(mappa.length);
-      mappa.forEach((handlerNumber, info) => creata[handlerNumber - 1] = info['value']);
+      mappa.forEach((handlerNumber, info){
+        creata[handlerNumber] = info['value'];
+        mappa[handlerNumber]['value'] = 0;
+      });
       print(creata);
+      print(mappa);
+      print(mappa[3]);
     });
+
+
     /*test('Test importazione e intepretazione stringa del giorno', (){
       // T3 => 11
       // T2 => 10
