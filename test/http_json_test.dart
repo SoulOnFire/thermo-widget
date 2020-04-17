@@ -37,6 +37,7 @@ void main() {
           'value' : 36,
           'color': Colors.deepPurple,
           'temp': 'T3',
+          'icon': Icons.brightness_3,
         },
         1 : {
           'value' : 24,
