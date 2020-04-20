@@ -46,8 +46,6 @@ class CircularSliderPaint extends StatefulWidget {
   /// Width of the stroke which draws the circle.
   final double sliderStrokeWidth;
 
-  /// ------------------------------
-  final WidgetMode mode;
 
   List<int> get intPositions {
     // Creates a fixed-length list.
@@ -57,7 +55,6 @@ class CircularSliderPaint extends StatefulWidget {
   }
 
   CircularSliderPaint({
-    @required this.mode,
     @required this.divisions,
     @required this.handlerValues,
     this.child,
@@ -149,14 +146,18 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     // Any widget can be updated thousands of time with no change so to modify it
     // we need to check if there are changes.
     List<int> oldValues = oldWidget.intPositions;
+    _calculatePaintData(oldValues, _painter.printingOrder);
+    /*List<int> oldValues = oldWidget.intPositions;
     List<int> newValues = widget.intPositions;
     for (int i = 0; i < oldValues.length; i++) {
+      print('old: ${oldValues[i]} new: ${newValues[i]}');
       if(oldValues[i] != newValues[i]) {
+        print('repaint');
         // If configuration is changed repaint the handlers.
         _calculatePaintData(oldValues, _painter.printingOrder);
         return;
       }
-    }
+    }*/
   }
 
   @override
@@ -192,9 +193,9 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     );
   }
 
-  bool areEqualValues(List<int> oldValues, List<int> newValues){
+  bool areAllDifferentValues(List<int> oldValues, List<int> newValues){
     for(int i = 0; i < oldValues.length; i++) {
-      if(oldValues[i] != newValues[i]) return false;
+      if(oldValues[i] == newValues[i]) return false;
     }
     return true;
   }
@@ -207,7 +208,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     List<int> printingOrder = oldOrder;
     List<int> intPositions = widget.intPositions;
 
-    if (oldValues != null && !areEqualValues(oldValues, intPositions)) {
+    if (oldValues != null && !areAllDifferentValues(oldValues, intPositions)) {
       // The user moved only one handler.
       for(int i = 0; i < oldValues.length; i++) {
         if(oldValues[i] != intPositions[i]){
@@ -239,7 +240,6 @@ class _CircularSliderState extends State<CircularSliderPaint> {
 
     // Creates the slider painter that will paints handlers.
     _painter = SliderPainter(
-      mode: widget.mode,
       angles: _angles,
       sweepAngles: _sweepAngles,
       handlerValues: widget.handlerValues,
@@ -374,57 +374,22 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     if (position == null) {
       return false;
     }
-    /// -----
-    // Fixed length List.
-    List<double> distancesHandler = List(isHandlerSelected.length);
-    /// -----
-
-    // Check if one of the handlers has been selected.
-    // Calculates the distances between the tap point and the center of the handlers.
-    var distFirst =
-        distanceBetweenPoints(position, _painter.firstHandlerCenter);
-    var distSecond =
-        distanceBetweenPoints(position, _painter.secondHandlerCenter);
-    var distThird =
-        distanceBetweenPoints(position, _painter.thirdHandlerCenter);
-    var distFourth =
-        distanceBetweenPoints(position, _painter.fourthHandlerCenter);
-    // Check which distance is the smallest one.
-    if (distFirst <= distSecond &&
-        distFirst <= distThird &&
-        distFirst <= distFourth) {
-      if (isPointInsideCircle(
-          position, _painter.firstHandlerCenter, widget.handlerOutterRadius)) {
-        // The tap point is mostly near handler #1 and it's inside it.
-        _isFirstHandlerSelected = true;
-      }
-    } else if (distSecond <= distFirst &&
-        distSecond <= distThird &&
-        distSecond <= distFourth) {
-      if (isPointInsideCircle(
-          position, _painter.secondHandlerCenter, widget.handlerOutterRadius)) {
-        // The tap point is mostly near handler #2 and it's inside it.
-        _isSecondHandlerSelected = true;
-      }
-    } else if (distThird <= distFirst &&
-        distThird <= distSecond &&
-        distThird <= distFourth) {
-      if (isPointInsideCircle(
-          position, _painter.thirdHandlerCenter, widget.handlerOutterRadius)) {
-        // The tap point is mostly near handler #3 and it's inside it.
-        _isThirdHandlerSelected = true;
-      }
-    } else if (distFourth <= distFirst &&
-        distFourth <= distSecond &&
-        distFourth <= distThird) {
-      if (isPointInsideCircle(
-          position, _painter.fourthHandlerCenter, widget.handlerOutterRadius)) {
-        // The tap point is mostly near handler #4 and it's inside it.
-        _isFourthHandlerSelected = true;
+    // Checks if the user selected one of the handler.
+    int minimumDistancePos = 0;
+    double minimumDistance = distanceBetweenPoints(position, _painter.handlerCenterOffsets[0]);
+    for(int i = 1; i < _painter.handlerCenterOffsets.length; i++) {
+      if(distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]) < minimumDistance) {
+        minimumDistance = distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]);
+        minimumDistancePos = i;
       }
     }
+    // We know which handler has the minimum distance from tap event.
+    if(isPointInsideCircle(position, _painter.handlerCenterOffsets[minimumDistancePos], widget.handlerOutterRadius)) {
+      // Handler #minimumDistancePos is selected.
+      isHandlerSelected[minimumDistancePos] = true;
+    }
 
-    if (isNoHandlersSelected) {
+    if(isNoHandlerSelected) {
       // Check if the user has clicked in one of the sections included between
       // two handler, so we need to move all the sections.
       if (isPointAlongCircle(position, _painter.center, _painter.radius,
@@ -432,49 +397,25 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // The point in which the user tapped is a valid point inside the circular crown.
         var angle = coordinatesToRadians(_painter.center, position);
         var positionPercentage = radiansToPercentage(angle);
-        if (isAngleInsideRadiansSelection(angle, _firstAngle, _sweepAngle12)) {
-          // The section between handler #1 and handler #2 has been selected.
-          _isFirstHandlerSelected = true;
-          _isSecondHandlerSelected = true;
-          // No need to account for negative values, that will be sorted out in the onPanUpdate.
-          _differenceFromInitPoint =
-              percentageToValue(positionPercentage, widget.divisions) -
-                  widget.firstValue;
-        } else if (isAngleInsideRadiansSelection(
-            angle, _secondAngle, _sweepAngle23)) {
-          // The section between handler #2 and handler #3 has been selected.
-          _isSecondHandlerSelected = true;
-          _isThirdHandlerSelected = true;
-          // No need to account for negative values, that will be sorted out in the onPanUpdate.
-          _differenceFromInitPoint =
-              percentageToValue(positionPercentage, widget.divisions) -
-                  widget.secondValue;
-        } else if (isAngleInsideRadiansSelection(
-            angle, _thirdAngle, _sweepAngle34)) {
-          // The section between handler #3 and handler #4 has been selected.
-          _isThirdHandlerSelected = true;
-          _isFourthHandlerSelected = true;
-          // No need to account for negative values, that will be sorted out in the onPanUpdate.
-          _differenceFromInitPoint =
-              percentageToValue(positionPercentage, widget.divisions) -
-                  widget.thirdValue;
-        } else if (isAngleInsideRadiansSelection(
-            angle, _fourthAngle, _sweepAngle41)) {
-          // The section between handler #4 and handler #1 has been selected.
-          _isFourthHandlerSelected = true;
-          _isFirstHandlerSelected = true;
-          // No need to account for negative values, that will be sorted out in the onPanUpdate.
-          _differenceFromInitPoint =
-              percentageToValue(positionPercentage, widget.divisions) -
-                  widget.fourthValue;
+        for(int i = 0; i < _angles.length; i++) {
+          if (isAngleInsideRadiansSelection(angle, _angles[i], _sweepAngles[i])) {
+            // The section between handler #i and handler #i+1 has been selected.
+            isHandlerSelected[i] = true;
+            isHandlerSelected[(i + 1) % isHandlerSelected.length] = true;
+            // No need to account for negative values, that will be sorted out in the onPanUpdate.
+            _differenceFromInitPoint =
+                percentageToValue(positionPercentage, widget.divisions) -
+                    widget.intPositions[i];
+            break;
+          }
         }
       }
     }
     // Returns true if at least one of the handler has been selected.
-    return _isFirstHandlerSelected ||
-        _isSecondHandlerSelected ||
-        _isThirdHandlerSelected ||
-        _isFourthHandlerSelected;
+    for(bool selected in isHandlerSelected) {
+      if (selected) return true;
+    }
+    return false;
   }
 }
 

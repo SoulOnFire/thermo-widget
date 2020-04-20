@@ -36,6 +36,11 @@ class SliderPainter extends CustomPainter {
   /// handlerValues[i] returns a Map<String, dynamic> containing handler information.
   Map<int, Map<String, dynamic>> handlerValues;
 
+  /// Handlers coordinate on the slider.
+  List<Offset> handlerOffsets;
+  /// Coordinates of the center of each handler.
+  List<Offset> handlerCenterOffsets;
+
   /// Angles in which handlers are located.
   ///
   /// angles[i] contains the angle in which handler #i is located.
@@ -46,8 +51,6 @@ class SliderPainter extends CustomPainter {
   /// _sweepAngles[i] contains the sweep angle between hanbdler #i and
   /// handler #(i+1) % _sweepAngles.length
   List<double> sweepAngles;
-
-  WidgetMode mode;
 
   Map<String, Color> defaultColors = {
     'T1': Colors.brown[400],
@@ -62,7 +65,6 @@ class SliderPainter extends CustomPainter {
   };
 
   SliderPainter({
-    @required this.mode,
     @required this.handlerValues,
     @required this.angles,
     @required this.sweepAngles,
@@ -91,7 +93,9 @@ class SliderPainter extends CustomPainter {
       // Paints the icon in the section between handler #i and the next one.
       _paintIcon(canvas, i);
     }
-
+    // Initializes handlers' coordinates lists.
+    handlerOffsets = List(handlerValues.length);
+    handlerCenterOffsets = List(handlerValues.length);
     // Prints the handlers in the given order.
     for (int toBePrinted in printingOrder) {
       _paintHandler(canvas, toBePrinted);
@@ -181,19 +185,19 @@ class SliderPainter extends CustomPainter {
     // Gets List<Offset> with handler coordinates.
     offsets = _getHandlerCoordinates(angles[number]);
     // Handler coordinates on the slider.
-    Offset handlerOffset = offsets[0];
+    handlerOffsets[number] = offsets[0];
     // Coordinates of the center of the handler.
-    Offset handlerCenterOffset = offsets[1];
+    handlerCenterOffsets[number] = offsets[1];
     // Draws the line which connect the slider to the handler.
     canvas.drawLine(
-        handlerOffset,
+        handlerOffsets[number],
         radiansToCoordinates(center, -pi / 2 + angles[number],
             radius + sliderStrokeWidth / 2 + 9.0),
         handlerLinePaint);
     // Draws the handler.
-    canvas.drawCircle(handlerCenterOffset, handlerRadius, handler);
+    canvas.drawCircle(handlerCenterOffsets[number], handlerRadius, handler);
     // Draws the handler outter circle.
-    canvas.drawCircle(handlerCenterOffset, handlerOutterRadius, handlerOutter);
+    canvas.drawCircle(handlerCenterOffsets[number], handlerOutterRadius, handlerOutter);
     // We need to move the time on the right and on the left to center it in the handler.
     adjustment =
     formatTime(handlerValues[number]['value']).length == 4 ? 2.0 : -2.0;
@@ -208,8 +212,8 @@ class SliderPainter extends CustomPainter {
     tp.layout();
     tp.paint(
         canvas,
-        Offset(handlerCenterOffset.dx - xGap + adjustment,
-            handlerCenterOffset.dy - yGap));
+        Offset(handlerCenterOffsets[number].dx - xGap + adjustment,
+            handlerCenterOffsets[number].dy - yGap));
   }
 
   @override

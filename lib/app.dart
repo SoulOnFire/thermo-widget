@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:thermo_widget/widget/hour_painter.dart';
 import 'widget/thermo_widget.dart';
 import 'widget/utils.dart';
@@ -56,32 +57,33 @@ class _TempPageState extends State<TempPage> {
 
   /// Widget which displays actual T1,T2,T3 values and make it possible to change
   /// them.
-  Widget _managersTile() => Column(
-    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    children: <Widget>[
-      _tempManager(t1, 'T1', Icons.brightness_3, Colors.brown[400], () {
-        if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
-          setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
-      }, () {
-        if (t1 + 0.1 < t2)
-          setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
-      }),
-      _tempManager(t2, 'T2', Icons.work, Colors.deepPurple, () {
-        if (t2 - 0.1 > t1)
-          setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
-      }, () {
-        if (t2 + 0.1 < t3)
-          setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
-      }),
-      _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
-        if (t3 - 0.1 > t2)
-          setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
-      }, () {
-        if (t3 + 0.1 <= maxTemp)
-          setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
-      }),
-    ],
-  );
+  Widget _managersTile() =>
+      Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          _tempManager(t1, 'T1', Icons.brightness_3, Colors.brown[400], () {
+            if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
+              setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
+          }, () {
+            if (t1 + 0.1 < t2)
+              setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
+          }),
+          _tempManager(t2, 'T2', Icons.work, Colors.deepPurple, () {
+            if (t2 - 0.1 > t1)
+              setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
+          }, () {
+            if (t2 + 0.1 < t3)
+              setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
+          }),
+          _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
+            if (t3 - 0.1 > t2)
+              setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
+          }, () {
+            if (t3 + 0.1 <= maxTemp)
+              setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
+          }),
+        ],
+      );
 
   /// Widget for managing one of the temperatures.
   Widget _tempManager(double temperature, String text, IconData icon,
@@ -171,45 +173,105 @@ class _WidgetPageState extends State<WidgetPage> {
   /// [3] => handler #4 position.
   Future<List<int>> _dayFuture;
 
+  Map<int, Map<String, dynamic>> testValues = {
+    0 : {
+      'value' : 6,
+      'color': Colors.brown,
+      'temp': 'T1',
+    },
+    1 : {
+      'value' : 24,
+      'color': Colors.amber,
+      'temp': 'T2',
+    },
+    2 : {
+      'value' : 36,
+      'color': Colors.deepPurple,
+      'temp': 'T3',
+      'icon': Icons.home,
+    },
+  };
+
   @override
   void initState() {
     super.initState();
     // Download actual day configuration and returns the future.
-    _dayFuture = RestApiHelper.getDayConfig(1, 'winter');
+    //_dayFuture = RestApiHelper.getDayConfig(1, 'winter');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              child: Center(child: Text('Thermo App')),
-              decoration: BoxDecoration(
-                color: Colors.blue,
+        drawer: Drawer(
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              DrawerHeader(
+                child: Center(child: Text('Thermo App')),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
               ),
-            ),
-            ListTile(
-              title: Text('Temperature Page'),
-              onTap: () {
-                // Update the state of the app.
-                // ...
-                // When a user opens the drawer, Flutter adds the drawer to
-                //  the navigation stack.
-                // Then close the drawer.
-                Navigator.popAndPushNamed(context, '/temperatures');
-              },
-            ),
-          ],
+              ListTile(
+                title: Text('Temperature Page'),
+                onTap: () {
+                  // Update the state of the app.
+                  // ...
+                  // When a user opens the drawer, Flutter adds the drawer to
+                  //  the navigation stack.
+                  // Then close the drawer.
+                  Navigator.popAndPushNamed(context, '/temperatures');
+                },
+              ),
+            ],
+          ),
         ),
-      ),
-      appBar: AppBar(
-        title: Text('Your day configuration'),
-      ),
-      body: FutureBuilder<List<int>>(
+        appBar: AppBar(
+          title: Text('Your day configuration'),
+        ),
+        body: Container(
+          decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                colors: [
+                  Color.fromRGBO(0, 176, 237, 1),
+                  Color.fromRGBO(0, 176, 237, 0.3)
+                ],
+                radius: 0.9,
+                stops: [0.4, 0.9],
+              )),
+          child: Center(
+            child: Container(
+                child: TempSlider(
+                  96,
+                  testValues,
+                  height: widget.height,
+                  width: widget.width,
+                  primarySectors: 24,
+                  secondarySectors: 96,
+                  baseColor: baseColor,
+                  hoursColor: Colors.greenAccent,
+                  handlerColor: Colors.white,
+                  onSelectionChange: _newUpdateLabels,
+                  onSelectionEnd: _newUpdateLabelsEnd,
+                  sliderStrokeWidth: 36,
+                  child: Padding(
+                    padding: const EdgeInsets.all(42.0),
+                    child: Center(
+                      /*child: Text(timeToPrint,
+                                // To view the intervals values use the comment below.
+                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
+                                style: TextStyle(
+                                    fontSize: 18.0, color: Colors.black))),*/
+                      child: CustomPaint(painter: HourPainter(timeToPrint)),
+                    ),
+                  ),
+                )),
+          ),
+        ),
+    );
+      /*FutureBuilder<List<int>>(
         future: _dayFuture,
         builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
@@ -287,7 +349,39 @@ class _WidgetPageState extends State<WidgetPage> {
           }
         },
       ),
-    );
+    );*/
+  }
+
+  bool areAllValuesDifferent(Map<int, Map<String, dynamic>> oldMap, Map<int, Map<String, dynamic>> newMap) {
+    for(int i = 0; i < oldMap.length; i++) {
+      if(oldMap[i]['value'] == newMap[i]['value']) return false;
+    }
+    return true;
+  }
+
+  void _newUpdateLabels(Map<int, Map<String, dynamic>> newMap) {
+    print('oldValue: ${testValues[0]['value']} newValue: ${newMap[0]['value']}');
+    if(!areAllValuesDifferent(testValues, newMap)) {
+      for(int i = 0; i < testValues.length; i++) {
+        if(testValues[i]['value'] != newMap[i]['value']) {
+          print('diverso');
+          timeToPrint = formatTime(newMap[i]['value']);
+        }
+      }
+    }
+    setState(() {
+      testValues = newMap;
+    });
+  }
+
+  void _newUpdateLabelsEnd(Map<int, Map<String, dynamic>> newMap) {
+    timeToPrint = '';
+    //print('valori modificati: ' + newMap.toString());
+    // Updates the state and makes the widget re-building.
+    setState(() {
+      testValues = newMap;
+    });
+
   }
 
   /// Updates the widget times, the time to be displayed inside the slider(
@@ -347,8 +441,8 @@ class _WidgetPageState extends State<WidgetPage> {
 
   /// Returns the binary string representing the day configuration using the
   /// handlers' value([firstTime],[secondTime],[thirdTime],[fourthTime]).
-  String _calculatesBinaryDay(
-      int firstTime, int secondTime, int thirdTime, int fourthTime) {
+  String _calculatesBinaryDay(int firstTime, int secondTime, int thirdTime,
+      int fourthTime) {
     String binaryDay = '';
     for (int i = 0; i <= 95; i++) {
       if (_isIncluded(i, firstTime, (secondTime - 1) % 96)) {

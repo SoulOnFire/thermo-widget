@@ -120,7 +120,6 @@ class _TempSliderState extends State<TempSlider> {
         height: widget.height ?? 300.0,
         width: widget.width ?? 300.0,
         child: CircularSliderPaint(
-          mode: WidgetMode.noLunch,
           handlerValues: _handlerValues,
           divisions: widget.divisions,
           primarySectors: widget.primarySectors ?? 0,
