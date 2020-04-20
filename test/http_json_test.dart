@@ -56,15 +56,27 @@ void main() {
         }
       };
 
+      Map altraMappa = Map();
+      mappa.forEach((key, map) {
+        altraMappa[key] = Map.from(map);
+      });
+      altraMappa[0]['value'] = 999;
+      print('AltraMappa: $altraMappa, originale: $mappa');
+
+      List<int> lista = [2,3,4,5];
+      List<int> altraLista = List.from(lista);
+      altraLista[0] = 111;
+      print('AltraLista: $altraLista, originale: $lista');
+
       // Creates a fixed-length list
-      List<int> creata = new List<int>(mappa.length);
+      /*List<int> creata = new List<int>(mappa.length);
       mappa.forEach((handlerNumber, info){
         creata[handlerNumber] = info['value'];
         mappa[handlerNumber]['value'] = 0;
       });
       print(creata);
       print(mappa);
-      print(mappa[3]);
+      print(mappa[3]);*/
     });
 
 

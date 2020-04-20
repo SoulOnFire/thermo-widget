@@ -190,6 +190,11 @@ class _WidgetPageState extends State<WidgetPage> {
       'temp': 'T3',
       'icon': Icons.home,
     },
+    3 : {
+      'value': 60,
+      'color': Colors.blue,
+      'temp': 'T2',
+    }
   };
 
   @override
@@ -245,7 +250,7 @@ class _WidgetPageState extends State<WidgetPage> {
             child: Container(
                 child: TempSlider(
                   96,
-                  testValues,
+                  newIdenticalMap(testValues),
                   height: widget.height,
                   width: widget.width,
                   primarySectors: 24,
@@ -364,22 +369,21 @@ class _WidgetPageState extends State<WidgetPage> {
     if(!areAllValuesDifferent(testValues, newMap)) {
       for(int i = 0; i < testValues.length; i++) {
         if(testValues[i]['value'] != newMap[i]['value']) {
-          print('diverso');
+          //print('diverso');
           timeToPrint = formatTime(newMap[i]['value']);
         }
       }
     }
     setState(() {
-      testValues = newMap;
+      testValues = newIdenticalMap(newMap);
     });
   }
 
   void _newUpdateLabelsEnd(Map<int, Map<String, dynamic>> newMap) {
     timeToPrint = '';
-    //print('valori modificati: ' + newMap.toString());
     // Updates the state and makes the widget re-building.
     setState(() {
-      testValues = newMap;
+      testValues = newIdenticalMap(newMap);
     });
 
   }

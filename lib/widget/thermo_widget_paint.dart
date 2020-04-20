@@ -5,8 +5,6 @@ import 'base_painter.dart';
 import 'slider_painter.dart';
 import 'utils.dart';
 
-enum WidgetMode { noLunch, lunch }
-
 class CircularSliderPaint extends StatefulWidget {
   /// Number of sectors in which the slider is divided(# of possible values on the slider).
   final int divisions;
@@ -145,10 +143,8 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     super.didUpdateWidget(oldWidget);
     // Any widget can be updated thousands of time with no change so to modify it
     // we need to check if there are changes.
-    List<int> oldValues = oldWidget.intPositions;
-    _calculatePaintData(oldValues, _painter.printingOrder);
-    /*List<int> oldValues = oldWidget.intPositions;
-    List<int> newValues = widget.intPositions;
+    List<int> oldValues = List.from(oldWidget.intPositions);
+    /*List<int> newValues = List.from(widget.intPositions);
     for (int i = 0; i < oldValues.length; i++) {
       print('old: ${oldValues[i]} new: ${newValues[i]}');
       if(oldValues[i] != newValues[i]) {
@@ -158,6 +154,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         return;
       }
     }*/
+    _calculatePaintData(oldValues, _painter.printingOrder);
   }
 
   @override
@@ -205,18 +202,15 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   /// [oldValues] List containing old values of the handlers.
   /// [oldOrder] List containing the previous order with which the handlers were printed.
   void _calculatePaintData(List<int> oldValues, List<int> oldOrder) {
-    List<int> printingOrder = oldOrder;
+    List<int> printingOrder = List.from(oldOrder);
     List<int> intPositions = widget.intPositions;
 
-    if (oldValues != null && !areAllDifferentValues(oldValues, intPositions)) {
-      // The user moved only one handler.
-      for(int i = 0; i < oldValues.length; i++) {
-        if(oldValues[i] != intPositions[i]){
-          // We keep the same order of before but we print for last the handler# 1,
-          // so we it will be displayed foreground.
+    if(!isBothHandlersSelected){
+      // Change the printing order.
+      for(int i = 0; i < isHandlerSelected.length; i++) {
+        if(isHandlerSelected[i]) {
           printingOrder.remove(i);
           printingOrder.add(i);
-          // We already found the selected handler so, stop the loop.
           break;
         }
       }
