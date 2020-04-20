@@ -143,17 +143,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     super.didUpdateWidget(oldWidget);
     // Any widget can be updated thousands of time with no change so to modify it
     // we need to check if there are changes.
-    List<int> oldValues = List.from(oldWidget.intPositions);
-    /*List<int> newValues = List.from(widget.intPositions);
-    for (int i = 0; i < oldValues.length; i++) {
-      print('old: ${oldValues[i]} new: ${newValues[i]}');
-      if(oldValues[i] != newValues[i]) {
-        print('repaint');
-        // If configuration is changed repaint the handlers.
-        _calculatePaintData(oldValues, _painter.printingOrder);
-        return;
-      }
-    }*/
+    List<int> oldValues = oldWidget.intPositions;
     _calculatePaintData(oldValues, _painter.printingOrder);
   }
 
@@ -202,7 +192,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   /// [oldValues] List containing old values of the handlers.
   /// [oldOrder] List containing the previous order with which the handlers were printed.
   void _calculatePaintData(List<int> oldValues, List<int> oldOrder) {
-    List<int> printingOrder = List.from(oldOrder);
+    List<int> printingOrder = oldOrder;
     List<int> intPositions = widget.intPositions;
 
     if(!isBothHandlersSelected){

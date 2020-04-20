@@ -250,7 +250,7 @@ class _WidgetPageState extends State<WidgetPage> {
             child: Container(
                 child: TempSlider(
                   96,
-                  newIdenticalMap(testValues),
+                  testValues,
                   height: widget.height,
                   width: widget.width,
                   primarySectors: 24,
@@ -365,12 +365,13 @@ class _WidgetPageState extends State<WidgetPage> {
   }
 
   void _newUpdateLabels(Map<int, Map<String, dynamic>> newMap) {
-    print('oldValue: ${testValues[0]['value']} newValue: ${newMap[0]['value']}');
     if(!areAllValuesDifferent(testValues, newMap)) {
+      // If the user is not moving all the crown.
       for(int i = 0; i < testValues.length; i++) {
         if(testValues[i]['value'] != newMap[i]['value']) {
-          //print('diverso');
+          // Display time of the handler which is being moved.
           timeToPrint = formatTime(newMap[i]['value']);
+          break;
         }
       }
     }

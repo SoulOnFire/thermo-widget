@@ -111,7 +111,7 @@ class _TempSliderState extends State<TempSlider> {
   @override
   void initState() {
     super.initState();
-    _handlerValues = Map.from(widget.handlerValues);
+    _handlerValues = newIdenticalMap(widget.handlerValues);
   }
 
   @override
@@ -128,17 +128,17 @@ class _TempSliderState extends State<TempSlider> {
           onSelectionChange: (newMap) {
             if (widget.onSelectionChange != null) {
               // If the caller passed a callback executes it.
-              widget.onSelectionChange(Map.from(newMap));
+              widget.onSelectionChange(newMap);
             }
             setState(() {
               // Updates the widget values.
-              _handlerValues = Map.from(newMap);
+              _handlerValues = newMap;
             });
           },
           onSelectionEnd: (newMap) {
             if (widget.onSelectionEnd != null) {
               // If the caller passed a callback executes it.
-              widget.onSelectionEnd(Map.from(newMap));
+              widget.onSelectionEnd(newMap);
             }
           },
           sliderStrokeWidth: widget.sliderStrokeWidth == null ||
