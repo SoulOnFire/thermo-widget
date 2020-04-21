@@ -145,21 +145,6 @@ class _WidgetPageState extends State<WidgetPage> {
   final baseColor = Color.fromRGBO(255, 255, 255, 0.3);
 
   // 1 = 15 minutes , valid interval 0:95
-  /// The value in which will be positioned the handler #1.
-  /// The initial value of section #1 and end value of section #4.
-  int firstTime = 12;
-
-  /// The value in which will be positioned the handler #2.
-  /// The initial value of section #2 and end value of section #1.
-  int secondTime = 36;
-
-  /// The value in which will be positioned the handler #3.
-  /// The initial value of section #3 and end value of section #2.
-  int thirdTime = 60;
-
-  /// The value in which will be positioned the handler #4.
-  /// The initial value of section #4 and end value of section #3.
-  int fourthTime = 84;
 
   /// Time to be displayed inside the handler representing the time the user is
   /// selecting moving one of the handlers.
@@ -173,7 +158,7 @@ class _WidgetPageState extends State<WidgetPage> {
   /// [3] => handler #4 position.
   Future<List<int>> _dayFuture;
 
-  Map<int, Map<String, dynamic>> testValues = {
+  Map<int, Map<String, dynamic>> handlerValues = {
     0 : {
       'value' : 6,
       'color': Colors.brown,
@@ -188,7 +173,6 @@ class _WidgetPageState extends State<WidgetPage> {
       'value' : 36,
       'color': Colors.deepPurple,
       'temp': 'T3',
-      'icon': Icons.home,
     },
     3 : {
       'value': 60,
@@ -250,7 +234,7 @@ class _WidgetPageState extends State<WidgetPage> {
             child: Container(
                 child: TempSlider(
                   96,
-                  testValues,
+                  handlerValues,
                   height: widget.height,
                   width: widget.width,
                   primarySectors: 24,
@@ -258,8 +242,8 @@ class _WidgetPageState extends State<WidgetPage> {
                   baseColor: baseColor,
                   hoursColor: Colors.greenAccent,
                   handlerColor: Colors.white,
-                  onSelectionChange: _newUpdateLabels,
-                  onSelectionEnd: _newUpdateLabelsEnd,
+                  onSelectionChange: _updateLabels,
+                  onSelectionEnd: _updateLabelsEnd,
                   sliderStrokeWidth: 36,
                   child: Padding(
                     padding: const EdgeInsets.all(42.0),
@@ -357,107 +341,78 @@ class _WidgetPageState extends State<WidgetPage> {
     );*/
   }
 
-  bool areAllValuesDifferent(Map<int, Map<String, dynamic>> oldMap, Map<int, Map<String, dynamic>> newMap) {
+  /// Checks if oldMap[i]['value'] is equal to newMap[i]['value'] for each i.
+  bool _areAllValuesDifferent(Map<int, Map<String, dynamic>> oldMap, Map<int, Map<String, dynamic>> newMap) {
     for(int i = 0; i < oldMap.length; i++) {
       if(oldMap[i]['value'] == newMap[i]['value']) return false;
     }
     return true;
   }
 
-  void _newUpdateLabels(Map<int, Map<String, dynamic>> newMap) {
-    if(!areAllValuesDifferent(testValues, newMap)) {
+  /// Updates the widget times, the time to be displayed inside the slider(
+  /// referring the handler is being moved) and re-build the widget by calling setState().
+  ///
+  /// [newMap] is the map containing updated handler values.
+  void _updateLabels(Map<int, Map<String, dynamic>> newMap) {
+    if(!_areAllValuesDifferent(handlerValues, newMap)) {
       // If the user is not moving all the crown.
-      for(int i = 0; i < testValues.length; i++) {
-        if(testValues[i]['value'] != newMap[i]['value']) {
+      for(int i = 0; i < handlerValues.length; i++) {
+        if(handlerValues[i]['value'] != newMap[i]['value']) {
           // Display time of the handler which is being moved.
           timeToPrint = formatTime(newMap[i]['value']);
           break;
         }
       }
     }
-    setState(() {
-      testValues = newIdenticalMap(newMap);
-    });
-  }
-
-  void _newUpdateLabelsEnd(Map<int, Map<String, dynamic>> newMap) {
-    timeToPrint = '';
     // Updates the state and makes the widget re-building.
     setState(() {
-      testValues = newIdenticalMap(newMap);
-    });
-
-  }
-
-  /// Updates the widget times, the time to be displayed inside the slider(
-  /// referring the handler is being moved) and re-build the widget by calling setState().
-  ///
-  /// [newFirstTime] Time selected by the handler #1.
-  /// [newSecondTime] Time selected by the handler #2.
-  /// [newThirdTime] Time selected by the handler #3.
-  /// [newFourthTime] Time selected by the handler #4.
-  void _updateLabels(int newFirstTime, int newSecondTime, int newThirdTime,
-      int newFourthTime) {
-    if (!(newFirstTime != firstTime &&
-        newSecondTime != secondTime &&
-        newThirdTime != thirdTime &&
-        newFourthTime != fourthTime)) {
-      if (newFirstTime != firstTime) {
-        timeToPrint = formatTime(newFirstTime);
-      } else if (newSecondTime != secondTime) {
-        timeToPrint = formatTime(newSecondTime);
-      } else if (newThirdTime != thirdTime) {
-        timeToPrint = formatTime(newThirdTime);
-      } else if (newFourthTime != fourthTime) {
-        timeToPrint = formatTime(newFourthTime);
-      }
-    }
-    // Updates the state and makes the widget re-building.
-    setState(() {
-      firstTime = newFirstTime;
-      secondTime = newSecondTime;
-      thirdTime = newThirdTime;
-      fourthTime = newFourthTime;
+      handlerValues = newIdenticalMap(newMap);
     });
   }
 
   /// Updates the widget times, hides the time displayed inside the slider
   /// and re-build the widget by calling setState().
   ///
-  /// [newFirstTime] Time selected by the handler #1.
-  /// [newSecondTime] Time selected by the handler #2.
-  /// [newThirdTime] Time selected by the handler #3.
-  /// [newFourthTime] Time selected by the handler #4.
-  void _updateLabelsEnd(int newFirstTime, int newSecondTime, int newThirdTime,
-      int newFourthTime) async {
+  /// [newMap] is the map containing updated handler values.
+  void _updateLabelsEnd(Map<int, Map<String, dynamic>> newMap) async{
     timeToPrint = '';
-    String binaryDay = _calculatesBinaryDay(
-        newFirstTime, newSecondTime, newThirdTime, newFourthTime);
+    String binaryDay = _calculatesBinaryDay(newMap);
+    print('Sending string: $binaryDay\nLength: ${binaryDay.length}');
     // Send changes to the server.
-    RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
+    //RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
-      firstTime = newFirstTime;
-      secondTime = newSecondTime;
-      thirdTime = newThirdTime;
-      fourthTime = newFourthTime;
+      handlerValues = newIdenticalMap(newMap);
     });
+
   }
 
   /// Returns the binary string representing the day configuration using the
   /// handlers' value([firstTime],[secondTime],[thirdTime],[fourthTime]).
-  String _calculatesBinaryDay(int firstTime, int secondTime, int thirdTime,
-      int fourthTime) {
+  String _calculatesBinaryDay(Map<int, Map<String, dynamic>> map) {
     String binaryDay = '';
     for (int i = 0; i <= 95; i++) {
-      if (_isIncluded(i, firstTime, (secondTime - 1) % 96)) {
-        binaryDay += '11';
-      } else if (_isIncluded(i, secondTime, (thirdTime - 1) % 96)) {
-        binaryDay += '10';
-      } else if (_isIncluded(i, thirdTime, (fourthTime - 1) % 96)) {
-        binaryDay += '11';
-      } else {
-        binaryDay += '01';
+      // We check for each value in which sections is inserted.
+      for(int j = 0; j < map.length; j++) {
+        if(_isIncluded(i, map[j]['value'], (map[(j + 1) % map.length]['value'] - 1) % 96)) {
+          switch (map[j]['temp']) {
+            case 'T0' :
+              binaryDay += '00';
+              break;
+            case 'T1' :
+              binaryDay += '01';
+              break;
+            case 'T2' :
+              binaryDay += '10';
+              break;
+            case 'T3' :
+              binaryDay += '11';
+              break;
+          }
+          // We found the section in which the value is included and added is
+          // code to the string. so stop the internal for loop.
+          break;
+        }
       }
     }
     return binaryDay;

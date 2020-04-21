@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thermo_widget/network/rest_client.dart';
 
 String hexToBinary(String hexString) {
   String binaryString = '';
@@ -31,7 +32,12 @@ String binaryToHex(String binaryString) {
 
 void main() {
   group('Alcuni test JSON e HTTP', () {
-    test('test uso Mappe', () {
+    test('test getDayConfig nuovo widget', (){
+      String test = '010101010101010101010101010110101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101010101010101010101010101010101010101001010101';
+
+      getTimes(test);
+    });
+    /*test('test uso Mappe', () {
       Map<int, Map<String, dynamic>> mappa = {
         2 : {
           'value' : 36,
@@ -56,6 +62,19 @@ void main() {
         }
       };
 
+      String ciao = 'T1';
+      for(int i = 0; i < 10; i++) {
+        switch(ciao) {
+          case 'T1':
+            print('T1');
+            break;
+          case 'T2':
+            print('T2');
+            break;
+        }
+        if(ciao == 'T1') break;
+      }
+
       Map altraMappa = Map();
       mappa.forEach((key, map) {
         altraMappa[key] = Map.from(map);
@@ -77,7 +96,7 @@ void main() {
       print(creata);
       print(mappa);
       print(mappa[3]);*/
-    });
+    });*/
 
 
     /*test('Test importazione e intepretazione stringa del giorno', (){

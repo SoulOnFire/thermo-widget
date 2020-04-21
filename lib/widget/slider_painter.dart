@@ -53,12 +53,14 @@ class SliderPainter extends CustomPainter {
   List<double> sweepAngles;
 
   Map<String, Color> defaultColors = {
+    'T0': Colors.redAccent,
     'T1': Colors.brown[400],
     'T2': Colors.deepPurpleAccent,
     'T3': Colors.amber,
   };
 
   Map<String, IconData> defaultIcons = {
+    'T0': Icons.ac_unit,
     'T1': Icons.brightness_3,
     'T2': Icons.work,
     'T3': Icons.home,

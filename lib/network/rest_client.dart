@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thermo_widget/widget/utils.dart';
+
 import 'network_exceptions.dart';
 
 /// Converts the [hexString] into a binary string.
@@ -45,37 +46,106 @@ String _binaryToHex(String binaryString) {
 /// [1] => handler #2 position
 /// [2] => handler #3 position
 /// [3] => handler #4 position.
-List<int> _getTimes(String binaryString){
+// TODO: set package private.
+Map<int, Map<String, dynamic>> getTimes(String binaryString) {
+  /// ----
+
+  List<Map<String, dynamic>> sections = [];
+  for (int i = 0; i <= binaryString.length - 2; i += 2) {
+    // A quarter of hour is represented by two binary digits.
+    // substring() returns a string with the digits from position i to i + 2 - 1.
+    String quarter = binaryString.substring(i, i + 2);
+    switch (quarter) {
+      case '00':  // T0
+        if(sections.isEmpty && binaryString.substring(
+            binaryString.length - 2, binaryString.length) !=
+            quarter || sections.isNotEmpty && sections.last['temp'] != 'T0') {
+          // Creates a new section.
+          sections.add({
+            'value': i ~/ 2,
+            'temp': 'T0',
+          });
+        }
+        break;
+      case '01':  // T1
+        if(sections.isEmpty && binaryString.substring(
+            binaryString.length - 2, binaryString.length) !=
+            quarter || sections.isNotEmpty && sections.last['temp'] != 'T1') {
+          // Creates a new section.
+          sections.add({
+            'value': i ~/ 2,
+            'temp': 'T1',
+          });
+        }
+        break;
+      case '10':  // T2
+        if(sections.isEmpty && binaryString.substring(
+            binaryString.length - 2, binaryString.length) !=
+            quarter || sections.isNotEmpty && sections.last['temp'] != 'T2') {
+          // Creates a new section.
+          sections.add({
+            'value': i ~/ 2,
+            'temp': 'T2',
+          });
+        }
+        break;
+      case '11':  // T3
+        if(sections.isEmpty && binaryString.substring(
+            binaryString.length - 2, binaryString.length) !=
+            quarter || sections.isNotEmpty && sections.last['temp'] != 'T3') {
+          // Creates a new section.
+          sections.add({
+            'value': i ~/ 2,
+            'temp': 'T3',
+          });
+        }
+        break;
+    }
+  }
+  Map<int, Map<String, dynamic>> dayMap = Map<int, Map<String, dynamic>>();
+  for(int i = 0; i < sections.length; i++) {
+    dayMap[i] = sections[i];
+  }
+  dayMap.forEach((key, info) {
+    print('$key: ${formatTime(info['value'])}');
+  });
+  return dayMap;
+
+  /// ----
+/*
   Map<String, int> t3Section = Map();
   Map<String, int> t3Section2 = Map();
   Map<String, int> t2Section = Map();
   Map<String, int> t1Section = Map();
 
-  for(int i = 0; i <= binaryString.length - 2; i += 2){
+  for (int i = 0; i <= binaryString.length - 2; i += 2) {
     // A quarter of hour is represented by two binary digits.
     // substring() returns a string with the digits from position i to i + 2 - 1.
     String quarter = binaryString.substring(i, i + 2);
-    switch(quarter){
+    switch (quarter) {
       case '11':
-        // T3 section.
-        if(t3Section['start'] == null || t3Section['finish'] == null){
+      // T3 section.
+        if (t3Section['start'] == null || t3Section['finish'] == null) {
           // Part of the first T3 section.
-          if(t3Section['start'] == null){
+          if (t3Section['start'] == null) {
             // This is the first part of T3 section we analyze.
-            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+            if (i == 0 &&
+                binaryString.substring(
+                    binaryString.length - 2, binaryString.length) ==
+                    quarter) {
               // This is the first quarter of the day configuration and the section starts before midnight.
               int j = binaryString.length - 2;
-              while(binaryString.substring(j - 2,j) == quarter){
+              while (binaryString.substring(j - 2, j) == quarter) {
                 j -= 2;
               }
               t3Section['start'] = j ~/ 2;
-            } else{
+            } else {
               // This is not the first quarter of the day configuration or the section doesn't start
               // before midnight.
               t3Section['start'] = i ~/ 2;
             }
           }
-          if(t3Section['finish'] == null) {
+          if (t3Section['finish'] == null) {
             // End of the section is not yet defined.
             if (i + 2 <= (binaryString.length - 2) &&
                 binaryString.substring(i + 2, i + 4) != quarter) {
@@ -88,22 +158,25 @@ List<int> _getTimes(String binaryString){
           }
         } else {
           // Part of the T3 section #2.
-          if(t3Section2['start'] == null){
+          if (t3Section2['start'] == null) {
             // This is the first part of T3 section #2 we analyze.
-            if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+            if (i == 0 &&
+                binaryString.substring(
+                    binaryString.length - 2, binaryString.length) ==
+                    quarter) {
               // This is the first quarter of the day configuration and the section starts before midnight.
               int j = binaryString.length - 2;
-              while(binaryString.substring(j - 2,j) == quarter){
+              while (binaryString.substring(j - 2, j) == quarter) {
                 j -= 2;
               }
               t3Section2['start'] = j ~/ 2;
-            } else{
+            } else {
               // This is not the first quarter of the day configuration or the section doesn't start
               // before midnight.
               t3Section2['start'] = i ~/ 2;
             }
           }
-          if(t3Section2['finish'] == null) {
+          if (t3Section2['finish'] == null) {
             // End of the section is not yet defined.
             if (i + 2 <= (binaryString.length - 2) &&
                 binaryString.substring(i + 2, i + 4) != quarter) {
@@ -117,23 +190,26 @@ List<int> _getTimes(String binaryString){
         }
         break;
       case '10':
-        // Part of T2 section.
-        if(t2Section['start'] == null) {
+      // Part of T2 section.
+        if (t2Section['start'] == null) {
           // This is the first part of T2 section we analyze.
-          if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+          if (i == 0 &&
+              binaryString.substring(
+                  binaryString.length - 2, binaryString.length) ==
+                  quarter) {
             // This is the first quarter of the day configuration and the section starts before midnight.
             int j = binaryString.length - 2;
-            while(binaryString.substring(j - 2,j) == quarter){
+            while (binaryString.substring(j - 2, j) == quarter) {
               j -= 2;
             }
             t2Section['start'] = j ~/ 2;
-          } else{
+          } else {
             // This is not the first quarter of the day configuration or the section doesn't start
             // before midnight.
             t2Section['start'] = i ~/ 2;
           }
         }
-        if(t2Section['finish'] == null) {
+        if (t2Section['finish'] == null) {
           // End of the section is not yet defined.
           if (i + 2 <= (binaryString.length - 2) &&
               binaryString.substring(i + 2, i + 4) != quarter) {
@@ -146,23 +222,26 @@ List<int> _getTimes(String binaryString){
         }
         break;
       case '01':
-        // Part of T1 section.
-        if(t1Section['start'] == null) {
+      // Part of T1 section.
+        if (t1Section['start'] == null) {
           // This is the first part of T\ section we analyze.
-          if(i == 0 && binaryString.substring(binaryString.length - 2,binaryString.length) == quarter){
+          if (i == 0 &&
+              binaryString.substring(
+                  binaryString.length - 2, binaryString.length) ==
+                  quarter) {
             // This is the first quarter of the day configuration and the section starts before midnight.
             int j = binaryString.length - 2;
-            while(binaryString.substring(j - 2,j) == quarter){
+            while (binaryString.substring(j - 2, j) == quarter) {
               j -= 2;
             }
             t1Section['start'] = j ~/ 2;
-          } else{
+          } else {
             // This is not the first quarter of the day configuration or the section doesn't start
             // before midnight.
             t1Section['start'] = i ~/ 2;
           }
         }
-        if(t1Section['finish'] == null) {
+        if (t1Section['finish'] == null) {
           // End of the section is not yet defined.
           if (i + 2 <= (binaryString.length - 2) &&
               binaryString.substring(i + 2, i + 4) != quarter) {
@@ -181,7 +260,7 @@ List<int> _getTimes(String binaryString){
   print('t2 section: ${t2Section.toString()}');
   print('t1 section: ${t1Section.toString()}');
   int firstTime, secondTime, thirdTime, fourthTime;
-  if((t3Section['finish'] + 1) % 96 == t2Section['start']) {
+  if ((t3Section['finish'] + 1) % 96 == t2Section['start']) {
     // t3Section is the section from handler #1 to handler #2.
     // t3section2 is the section from handler #3 to handler #4.
     firstTime = t3Section['start'];
@@ -196,7 +275,7 @@ List<int> _getTimes(String binaryString){
   secondTime = t2Section['start'];
   // Start of section from handler #4 to handler #1.
   fourthTime = t1Section['start'];
-  return [firstTime, secondTime, thirdTime, fourthTime];
+  return [firstTime, secondTime, thirdTime, fourthTime];*/
 }
 
 class RestApiHelper {
@@ -316,13 +395,15 @@ class RestApiHelper {
     String token = await _getToken();
     String keycode = await _getKeyCode();
     try {
-      var httpResponse = await http
-          .post('$thermoApiUrl/$postDayConfigUrl/$keycode/$keycode', headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      }, body: jsonEncode({
-        '$season.day$dayNumber': hexDay,
-      }));
+      var httpResponse =
+      await http.post('$thermoApiUrl/$postDayConfigUrl/$keycode/$keycode',
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            '$season.day$dayNumber': hexDay,
+          }));
       Map<String, dynamic> bodyResponse = _returnResponse(httpResponse);
       print('${DateTime.now().toString()} ${bodyResponse['ok']}');
       return bodyResponse['ok'] as bool;
@@ -333,16 +414,20 @@ class RestApiHelper {
 
   /// Returns the temperature configuration for the desired [dayNumber] in
   /// binary format in [season].
-  static Future<List<int>> getDayConfig(int dayNumber, String season) async {
-    List<dynamic> devicesList = await getDevices();
+  static void getDayConfig(int dayNumber, String season) async {
+    /*List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;
     Map<String, dynamic> weekConf = firstDevInfo[season];
     // TODO: eliminare dopo testing.
     print('Day received: ${weekConf['day$dayNumber'] as String}');
     print('Day received: ${_hexToBinary(weekConf['day$dayNumber'] as String)}');
-    List<int> expectedPositions = _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
-    print('#1: ${formatTime(expectedPositions[0])}\n#2: ${formatTime(expectedPositions[1])}\n#3: ${formatTime(expectedPositions[2])}\n#4_ ${formatTime(expectedPositions[3])},');
-    // Converts the configuration into binary and sent back to the caller.
-    return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+    Map<int, Map<String, dynamic>> expectedPositions =
+    getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));*/
+    Map<int, Map<String, dynamic>> expectedPositions = getTimes('010101010101010101010101010101010101010101010101011010101010101010101010101111111111111111111111111111111111111111111111111010101010101010101010101010101010101010101010101010010101010101010101');
+    expectedPositions.forEach((key, info) {
+      print('$key: ${formatTime(info['value'])}');
+    });
+     // Converts the configuration into binary and sent back to the caller.
+   // return getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 }
