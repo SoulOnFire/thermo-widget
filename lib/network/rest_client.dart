@@ -46,9 +46,7 @@ String _binaryToHex(String binaryString) {
 /// [1] => handler #2 position
 /// [2] => handler #3 position
 /// [3] => handler #4 position.
-// TODO: set package private.
-Map<int, Map<String, dynamic>> getTimes(String binaryString) {
-  /// ----
+Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
 
   List<Map<String, dynamic>> sections = [];
   for (int i = 0; i <= binaryString.length - 2; i += 2) {
@@ -110,172 +108,6 @@ Map<int, Map<String, dynamic>> getTimes(String binaryString) {
     print('$key: ${formatTime(info['value'])}');
   });
   return dayMap;
-
-  /// ----
-/*
-  Map<String, int> t3Section = Map();
-  Map<String, int> t3Section2 = Map();
-  Map<String, int> t2Section = Map();
-  Map<String, int> t1Section = Map();
-
-  for (int i = 0; i <= binaryString.length - 2; i += 2) {
-    // A quarter of hour is represented by two binary digits.
-    // substring() returns a string with the digits from position i to i + 2 - 1.
-    String quarter = binaryString.substring(i, i + 2);
-    switch (quarter) {
-      case '11':
-      // T3 section.
-        if (t3Section['start'] == null || t3Section['finish'] == null) {
-          // Part of the first T3 section.
-          if (t3Section['start'] == null) {
-            // This is the first part of T3 section we analyze.
-            if (i == 0 &&
-                binaryString.substring(
-                    binaryString.length - 2, binaryString.length) ==
-                    quarter) {
-              // This is the first quarter of the day configuration and the section starts before midnight.
-              int j = binaryString.length - 2;
-              while (binaryString.substring(j - 2, j) == quarter) {
-                j -= 2;
-              }
-              t3Section['start'] = j ~/ 2;
-            } else {
-              // This is not the first quarter of the day configuration or the section doesn't start
-              // before midnight.
-              t3Section['start'] = i ~/ 2;
-            }
-          }
-          if (t3Section['finish'] == null) {
-            // End of the section is not yet defined.
-            if (i + 2 <= (binaryString.length - 2) &&
-                binaryString.substring(i + 2, i + 4) != quarter) {
-              // If the next quarter is different from this one, this is the end of section.
-              t3Section['finish'] = i ~/ 2;
-            } else if (i + 2 > (binaryString.length - 2)) {
-              // This is the last quarter of day configuration, so it's the end of the section.
-              t3Section['finish'] = (binaryString.length - 2) ~/ 2;
-            }
-          }
-        } else {
-          // Part of the T3 section #2.
-          if (t3Section2['start'] == null) {
-            // This is the first part of T3 section #2 we analyze.
-            if (i == 0 &&
-                binaryString.substring(
-                    binaryString.length - 2, binaryString.length) ==
-                    quarter) {
-              // This is the first quarter of the day configuration and the section starts before midnight.
-              int j = binaryString.length - 2;
-              while (binaryString.substring(j - 2, j) == quarter) {
-                j -= 2;
-              }
-              t3Section2['start'] = j ~/ 2;
-            } else {
-              // This is not the first quarter of the day configuration or the section doesn't start
-              // before midnight.
-              t3Section2['start'] = i ~/ 2;
-            }
-          }
-          if (t3Section2['finish'] == null) {
-            // End of the section is not yet defined.
-            if (i + 2 <= (binaryString.length - 2) &&
-                binaryString.substring(i + 2, i + 4) != quarter) {
-              // If the next quarter is different from this one, this is the end of section.
-              t3Section2['finish'] = i ~/ 2;
-            } else if (i + 2 > (binaryString.length - 2)) {
-              // This is the last quarter of day configuration, so it's the end of the section.
-              t3Section2['finish'] = (binaryString.length - 2) ~/ 2;
-            }
-          }
-        }
-        break;
-      case '10':
-      // Part of T2 section.
-        if (t2Section['start'] == null) {
-          // This is the first part of T2 section we analyze.
-          if (i == 0 &&
-              binaryString.substring(
-                  binaryString.length - 2, binaryString.length) ==
-                  quarter) {
-            // This is the first quarter of the day configuration and the section starts before midnight.
-            int j = binaryString.length - 2;
-            while (binaryString.substring(j - 2, j) == quarter) {
-              j -= 2;
-            }
-            t2Section['start'] = j ~/ 2;
-          } else {
-            // This is not the first quarter of the day configuration or the section doesn't start
-            // before midnight.
-            t2Section['start'] = i ~/ 2;
-          }
-        }
-        if (t2Section['finish'] == null) {
-          // End of the section is not yet defined.
-          if (i + 2 <= (binaryString.length - 2) &&
-              binaryString.substring(i + 2, i + 4) != quarter) {
-            // If the next quarter is different from this one, this is the end of section.
-            t2Section['finish'] = i ~/ 2;
-          } else if (i + 2 > (binaryString.length - 2)) {
-            // This is the last quarter of day configuration, so it's the end of the section.
-            t2Section['finish'] = (binaryString.length - 2) ~/ 2;
-          }
-        }
-        break;
-      case '01':
-      // Part of T1 section.
-        if (t1Section['start'] == null) {
-          // This is the first part of T\ section we analyze.
-          if (i == 0 &&
-              binaryString.substring(
-                  binaryString.length - 2, binaryString.length) ==
-                  quarter) {
-            // This is the first quarter of the day configuration and the section starts before midnight.
-            int j = binaryString.length - 2;
-            while (binaryString.substring(j - 2, j) == quarter) {
-              j -= 2;
-            }
-            t1Section['start'] = j ~/ 2;
-          } else {
-            // This is not the first quarter of the day configuration or the section doesn't start
-            // before midnight.
-            t1Section['start'] = i ~/ 2;
-          }
-        }
-        if (t1Section['finish'] == null) {
-          // End of the section is not yet defined.
-          if (i + 2 <= (binaryString.length - 2) &&
-              binaryString.substring(i + 2, i + 4) != quarter) {
-            // If the next quarter is different from this one, this is the end of section.
-            t1Section['finish'] = i ~/ 2;
-          } else if (i + 2 > (binaryString.length - 2)) {
-            // This is the last quarter of day configuration, so it's the end of the section.
-            t1Section['finish'] = (binaryString.length - 2) ~/ 2;
-          }
-        }
-        break;
-    }
-  }
-  print('t3 section: ${t3Section.toString()}');
-  print('t3 section: ${t3Section2.toString()}');
-  print('t2 section: ${t2Section.toString()}');
-  print('t1 section: ${t1Section.toString()}');
-  int firstTime, secondTime, thirdTime, fourthTime;
-  if ((t3Section['finish'] + 1) % 96 == t2Section['start']) {
-    // t3Section is the section from handler #1 to handler #2.
-    // t3section2 is the section from handler #3 to handler #4.
-    firstTime = t3Section['start'];
-    thirdTime = t3Section2['start'];
-  } else {
-    // t3Section2 is the section from handler #1 to handler #2.
-    // t3section is the section from handler #3 to handler #4.
-    firstTime = t3Section2['start'];
-    thirdTime = t3Section['start'];
-  }
-  // Start of section from handler #2 to handler #3.
-  secondTime = t2Section['start'];
-  // Start of section from handler #4 to handler #1.
-  fourthTime = t1Section['start'];
-  return [firstTime, secondTime, thirdTime, fourthTime];*/
 }
 
 class RestApiHelper {
@@ -414,7 +246,7 @@ class RestApiHelper {
 
   /// Returns the temperature configuration for the desired [dayNumber] in
   /// binary format in [season].
-  static void getDayConfig(int dayNumber, String season) async {
+  static Future<Map<int, Map<String, dynamic>>> getDayConfig(int dayNumber, String season) async {
     /*List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;
     Map<String, dynamic> weekConf = firstDevInfo[season];
@@ -423,11 +255,13 @@ class RestApiHelper {
     print('Day received: ${_hexToBinary(weekConf['day$dayNumber'] as String)}');
     Map<int, Map<String, dynamic>> expectedPositions =
     getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));*/
-    Map<int, Map<String, dynamic>> expectedPositions = getTimes('010101010101010101010101010101010101010101010101011010101010101010101010101111111111111111111111111111111111111111111111111010101010101010101010101010101010101010101010101010010101010101010101');
+    String testString = '101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101001010101010101010101010101010101010101010101010110101010101010101010101010';
+    Map<int, Map<String, dynamic>> expectedPositions = _getTimes(testString);
     expectedPositions.forEach((key, info) {
       print('$key: ${formatTime(info['value'])}');
     });
+    return expectedPositions;
      // Converts the configuration into binary and sent back to the caller.
-   // return getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+   // return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 }

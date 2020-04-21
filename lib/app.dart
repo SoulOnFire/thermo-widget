@@ -156,7 +156,7 @@ class _WidgetPageState extends State<WidgetPage> {
   /// [1] => handler #2 position
   /// [2] => handler #3 position
   /// [3] => handler #4 position.
-  Future<List<int>> _dayFuture;
+  Future<Map<int, Map<String, dynamic>>> _dayFuture;
 
   Map<int, Map<String, dynamic>> handlerValues = {
     0 : {
@@ -185,7 +185,7 @@ class _WidgetPageState extends State<WidgetPage> {
   void initState() {
     super.initState();
     // Download actual day configuration and returns the future.
-    //_dayFuture = RestApiHelper.getDayConfig(1, 'winter');
+    _dayFuture = RestApiHelper.getDayConfig(1, 'winter');
   }
 
   @override
@@ -219,50 +219,9 @@ class _WidgetPageState extends State<WidgetPage> {
         appBar: AppBar(
           title: Text('Your day configuration'),
         ),
-        body: Container(
-          decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                colors: [
-                  Color.fromRGBO(0, 176, 237, 1),
-                  Color.fromRGBO(0, 176, 237, 0.3)
-                ],
-                radius: 0.9,
-                stops: [0.4, 0.9],
-              )),
-          child: Center(
-            child: Container(
-                child: TempSlider(
-                  96,
-                  handlerValues,
-                  height: widget.height,
-                  width: widget.width,
-                  primarySectors: 24,
-                  secondarySectors: 96,
-                  baseColor: baseColor,
-                  hoursColor: Colors.greenAccent,
-                  handlerColor: Colors.white,
-                  onSelectionChange: _updateLabels,
-                  onSelectionEnd: _updateLabelsEnd,
-                  sliderStrokeWidth: 36,
-                  child: Padding(
-                    padding: const EdgeInsets.all(42.0),
-                    child: Center(
-                      /*child: Text(timeToPrint,
-                                // To view the intervals values use the comment below.
-                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                                style: TextStyle(
-                                    fontSize: 18.0, color: Colors.black))),*/
-                      child: CustomPaint(painter: HourPainter(timeToPrint)),
-                    ),
-                  ),
-                )),
-          ),
-        ),
-    );
-      /*FutureBuilder<List<int>>(
+        body: FutureBuilder<Map<int, Map<String, dynamic>>>(
         future: _dayFuture,
-        builder: (BuildContext context, AsyncSnapshot<List<int>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<Map<int, Map<String, dynamic>>> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             // The request has been completed.
             if (snapshot.hasError) {
@@ -288,10 +247,7 @@ class _WidgetPageState extends State<WidgetPage> {
                     child: TempSlider(
                       96,
                       // Initial handlers' values loaded from the server.
-                      snapshot.data[0],
-                      snapshot.data[1],
-                      snapshot.data[2],
-                      snapshot.data[3],
+                      snapshot.data,
                       height: widget.height,
                       width: widget.width,
                       primarySectors: 24,
@@ -338,7 +294,47 @@ class _WidgetPageState extends State<WidgetPage> {
           }
         },
       ),
-    );*/
+    );
+      /*Container(
+          decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                colors: [
+                  Color.fromRGBO(0, 176, 237, 1),
+                  Color.fromRGBO(0, 176, 237, 0.3)
+                ],
+                radius: 0.9,
+                stops: [0.4, 0.9],
+              )),
+          child: Center(
+            child: Container(
+                child: TempSlider(
+                  96,
+                  handlerValues,
+                  height: widget.height,
+                  width: widget.width,
+                  primarySectors: 24,
+                  secondarySectors: 96,
+                  baseColor: baseColor,
+                  hoursColor: Colors.greenAccent,
+                  handlerColor: Colors.white,
+                  onSelectionChange: _updateLabels,
+                  onSelectionEnd: _updateLabelsEnd,
+                  sliderStrokeWidth: 36,
+                  child: Padding(
+                    padding: const EdgeInsets.all(42.0),
+                    child: Center(
+                      /*child: Text(timeToPrint,
+                                // To view the intervals values use the comment below.
+                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
+                                style: TextStyle(
+                                    fontSize: 18.0, color: Colors.black))),*/
+                      child: CustomPaint(painter: HourPainter(timeToPrint)),
+                    ),
+                  ),
+                )),
+          ),
+        ),*/
   }
 
   /// Checks if oldMap[i]['value'] is equal to newMap[i]['value'] for each i.

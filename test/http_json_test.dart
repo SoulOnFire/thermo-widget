@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thermo_widget/network/rest_client.dart';
+
 
 String hexToBinary(String hexString) {
   String binaryString = '';
@@ -32,11 +31,11 @@ String binaryToHex(String binaryString) {
 
 void main() {
   group('Alcuni test JSON e HTTP', () {
-    test('test getDayConfig nuovo widget', (){
+    /*test('test getDayConfig nuovo widget', (){
       String test = '010101010101010101010101010110101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101010101010101010101010101010101010101001010101';
 
       getTimes(test);
-    });
+    });*/
     /*test('test uso Mappe', () {
       Map<int, Map<String, dynamic>> mappa = {
         2 : {
