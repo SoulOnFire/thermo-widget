@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'package:thermo_widget/widget/hour_painter.dart';
+
+import 'network/rest_client.dart';
 import 'widget/thermo_widget.dart';
 import 'widget/utils.dart';
-import 'network/rest_client.dart';
 
 /// GLOBAL variables
 final double minTemp = 4.0;
@@ -57,33 +57,32 @@ class _TempPageState extends State<TempPage> {
 
   /// Widget which displays actual T1,T2,T3 values and make it possible to change
   /// them.
-  Widget _managersTile() =>
-      Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          _tempManager(t1, 'T1', Icons.brightness_3, Colors.brown[400], () {
-            if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
-              setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t1 + 0.1 < t2)
-              setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
-          }),
-          _tempManager(t2, 'T2', Icons.work, Colors.deepPurple, () {
-            if (t2 - 0.1 > t1)
-              setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t2 + 0.1 < t3)
-              setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
-          }),
-          _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
-            if (t3 - 0.1 > t2)
-              setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
-          }, () {
-            if (t3 + 0.1 <= maxTemp)
-              setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
-          }),
-        ],
-      );
+  Widget _managersTile() => Column(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: <Widget>[
+      _tempManager(t1, 'T1', Icons.brightness_3, Colors.brown[400], () {
+        if (double.parse((t1 - 0.1).toStringAsFixed(1)) >= minTemp)
+          setState(() => t1 = double.parse((t1 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t1 + 0.1 < t2)
+          setState(() => t1 = double.parse((t1 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t2, 'T2', Icons.work, Colors.deepPurple, () {
+        if (t2 - 0.1 > t1)
+          setState(() => t2 = double.parse((t2 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t2 + 0.1 < t3)
+          setState(() => t2 = double.parse((t2 + 0.1).toStringAsFixed(1)));
+      }),
+      _tempManager(t3, 'T3', Icons.home, Colors.amber, () {
+        if (t3 - 0.1 > t2)
+          setState(() => t3 = double.parse((t3 - 0.1).toStringAsFixed(1)));
+      }, () {
+        if (t3 + 0.1 <= maxTemp)
+          setState(() => t3 = double.parse((t3 + 0.1).toStringAsFixed(1)));
+      }),
+    ],
+  );
 
   /// Widget for managing one of the temperatures.
   Widget _tempManager(double temperature, String text, IconData icon,
@@ -150,36 +149,33 @@ class _WidgetPageState extends State<WidgetPage> {
   /// selecting moving one of the handlers.
   String timeToPrint = '';
 
-  /// List of int values corresponding to the handler positions(using values 0:95)
+  /// Future<Map> containing all info about day configuration sections.
+  /// Once the Future will be satisfied it will return the map with the configuration.
   ///
-  /// [0] => handler #1 position
-  /// [1] => handler #2 position
-  /// [2] => handler #3 position
-  /// [3] => handler #4 position.
+  /// In the outter map int value is the handler id.
+  /// In the internal map String is the name of the property:
+  /// MANDATORY values
+  /// 'value': int => returns int value which represents the handler
+  /// position on the crown.
+  /// 'temp': String => returns the String T0,T1,T2,T3 which represents the
+  /// temperature set in this section from this handler to the next one.
+  /// OPTIONAL values
+  /// 'icon': Icons => icon to display for the section.
+  /// 'color': Color => color used for the section.
   Future<Map<int, Map<String, dynamic>>> _dayFuture;
 
-  Map<int, Map<String, dynamic>> handlerValues = {
-    0 : {
-      'value' : 6,
-      'color': Colors.brown,
-      'temp': 'T1',
-    },
-    1 : {
-      'value' : 24,
-      'color': Colors.amber,
-      'temp': 'T2',
-    },
-    2 : {
-      'value' : 36,
-      'color': Colors.deepPurple,
-      'temp': 'T3',
-    },
-    3 : {
-      'value': 60,
-      'color': Colors.blue,
-      'temp': 'T2',
-    }
-  };
+  /// Map containing updated values about day configuration.
+  ///
+  /// each handlerValues[i] returns a Map<String, dynamic> where:
+  /// MANDATORY values
+  /// 'value': int => returns int value which represents the handler
+  /// position on the crown.
+  /// 'temp': String => returns the String T0,T1,T2,T3 which represents the
+  /// temperature set in this section from this handler to the next one.
+  /// OPTIONAL values
+  /// 'icon': Icons => icon to display for the section.
+  /// 'color': Color => color used for the section.
+  Map<int, Map<String, dynamic>> handlerValues = Map();
 
   @override
   void initState() {
@@ -191,37 +187,38 @@ class _WidgetPageState extends State<WidgetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        drawer: Drawer(
-          child: ListView(
-            // Important: Remove any padding from the ListView.
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              DrawerHeader(
-                child: Center(child: Text('Thermo App')),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                ),
+      drawer: Drawer(
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Center(child: Text('Thermo App')),
+              decoration: BoxDecoration(
+                color: Colors.blue,
               ),
-              ListTile(
-                title: Text('Temperature Page'),
-                onTap: () {
-                  // Update the state of the app.
-                  // ...
-                  // When a user opens the drawer, Flutter adds the drawer to
-                  //  the navigation stack.
-                  // Then close the drawer.
-                  Navigator.popAndPushNamed(context, '/temperatures');
-                },
-              ),
-            ],
-          ),
+            ),
+            ListTile(
+              title: Text('Temperature Page'),
+              onTap: () {
+                // Update the state of the app.
+                // ...
+                // When a user opens the drawer, Flutter adds the drawer to
+                //  the navigation stack.
+                // Then close the drawer.
+                Navigator.popAndPushNamed(context, '/temperatures');
+              },
+            ),
+          ],
         ),
-        appBar: AppBar(
-          title: Text('Your day configuration'),
-        ),
-        body: FutureBuilder<Map<int, Map<String, dynamic>>>(
+      ),
+      appBar: AppBar(
+        title: Text('Your day configuration'),
+      ),
+      body: FutureBuilder<Map<int, Map<String, dynamic>>>(
         future: _dayFuture,
-        builder: (BuildContext context, AsyncSnapshot<Map<int, Map<String, dynamic>>> snapshot) {
+        builder: (BuildContext context,
+            AsyncSnapshot<Map<int, Map<String, dynamic>>> snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             // The request has been completed.
             if (snapshot.hasError) {
@@ -261,11 +258,6 @@ class _WidgetPageState extends State<WidgetPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(42.0),
                         child: Center(
-                          /*child: Text(timeToPrint,
-                                // To view the intervals values use the comment below.
-                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                                style: TextStyle(
-                                    fontSize: 18.0, color: Colors.black))),*/
                           child: CustomPaint(painter: HourPainter(timeToPrint)),
                         ),
                       ),
@@ -295,52 +287,13 @@ class _WidgetPageState extends State<WidgetPage> {
         },
       ),
     );
-      /*Container(
-          decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                colors: [
-                  Color.fromRGBO(0, 176, 237, 1),
-                  Color.fromRGBO(0, 176, 237, 0.3)
-                ],
-                radius: 0.9,
-                stops: [0.4, 0.9],
-              )),
-          child: Center(
-            child: Container(
-                child: TempSlider(
-                  96,
-                  handlerValues,
-                  height: widget.height,
-                  width: widget.width,
-                  primarySectors: 24,
-                  secondarySectors: 96,
-                  baseColor: baseColor,
-                  hoursColor: Colors.greenAccent,
-                  handlerColor: Colors.white,
-                  onSelectionChange: _updateLabels,
-                  onSelectionEnd: _updateLabelsEnd,
-                  sliderStrokeWidth: 36,
-                  child: Padding(
-                    padding: const EdgeInsets.all(42.0),
-                    child: Center(
-                      /*child: Text(timeToPrint,
-                                // To view the intervals values use the comment below.
-                                //'${_formatIntervalTime(initTime, endTime)} - ${_formatIntervalTime(endTime, initTime_2)} -  ${_formatIntervalTime(initTime_2, endTime_2)} - ${_formatIntervalTime(endTime_2, initTime)}',
-                                style: TextStyle(
-                                    fontSize: 18.0, color: Colors.black))),*/
-                      child: CustomPaint(painter: HourPainter(timeToPrint)),
-                    ),
-                  ),
-                )),
-          ),
-        ),*/
   }
 
   /// Checks if oldMap[i]['value'] is equal to newMap[i]['value'] for each i.
-  bool _areAllValuesDifferent(Map<int, Map<String, dynamic>> oldMap, Map<int, Map<String, dynamic>> newMap) {
-    for(int i = 0; i < oldMap.length; i++) {
-      if(oldMap[i]['value'] == newMap[i]['value']) return false;
+  bool _areAllValuesDifferent(Map<int, Map<String, dynamic>> oldMap,
+      Map<int, Map<String, dynamic>> newMap) {
+    for (int i = 0; i < oldMap.length; i++) {
+      if (oldMap[i]['value'] == newMap[i]['value']) return false;
     }
     return true;
   }
@@ -350,10 +303,10 @@ class _WidgetPageState extends State<WidgetPage> {
   ///
   /// [newMap] is the map containing updated handler values.
   void _updateLabels(Map<int, Map<String, dynamic>> newMap) {
-    if(!_areAllValuesDifferent(handlerValues, newMap)) {
+    if (!_areAllValuesDifferent(handlerValues, newMap)) {
       // If the user is not moving all the crown.
-      for(int i = 0; i < handlerValues.length; i++) {
-        if(handlerValues[i]['value'] != newMap[i]['value']) {
+      for (int i = 0; i < handlerValues.length; i++) {
+        if (handlerValues[i]['value'] != newMap[i]['value']) {
           // Display time of the handler which is being moved.
           timeToPrint = formatTime(newMap[i]['value']);
           break;
@@ -363,6 +316,8 @@ class _WidgetPageState extends State<WidgetPage> {
     // Updates the state and makes the widget re-building.
     setState(() {
       handlerValues = newIdenticalMap(newMap);
+      // TODO: eliminare print.
+      print(handlerValues);
     });
   }
 
@@ -370,7 +325,7 @@ class _WidgetPageState extends State<WidgetPage> {
   /// and re-build the widget by calling setState().
   ///
   /// [newMap] is the map containing updated handler values.
-  void _updateLabelsEnd(Map<int, Map<String, dynamic>> newMap) async{
+  void _updateLabelsEnd(Map<int, Map<String, dynamic>> newMap) async {
     timeToPrint = '';
     String binaryDay = _calculatesBinaryDay(newMap);
     print('Sending string: $binaryDay\nLength: ${binaryDay.length}');
@@ -380,7 +335,6 @@ class _WidgetPageState extends State<WidgetPage> {
     setState(() {
       handlerValues = newIdenticalMap(newMap);
     });
-
   }
 
   /// Returns the binary string representing the day configuration using the
@@ -389,19 +343,20 @@ class _WidgetPageState extends State<WidgetPage> {
     String binaryDay = '';
     for (int i = 0; i <= 95; i++) {
       // We check for each value in which sections is inserted.
-      for(int j = 0; j < map.length; j++) {
-        if(_isIncluded(i, map[j]['value'], (map[(j + 1) % map.length]['value'] - 1) % 96)) {
+      for (int j = 0; j < map.length; j++) {
+        if (_isIncluded(i, map[j]['value'],
+            (map[(j + 1) % map.length]['value'] - 1) % 96)) {
           switch (map[j]['temp']) {
-            case 'T0' :
+            case 'T0':
               binaryDay += '00';
               break;
-            case 'T1' :
+            case 'T1':
               binaryDay += '01';
               break;
-            case 'T2' :
+            case 'T2':
               binaryDay += '10';
               break;
-            case 'T3' :
+            case 'T3':
               binaryDay += '11';
               break;
           }

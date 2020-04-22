@@ -11,9 +11,10 @@ typedef SelectionChanged<T> = void Function(T map);
 /// This distance is needed to allow handlers' gestures recognition.
 const double distanceFromCanvas = 45.0;
 
-/// Returns a new identical Map independent from the old one.
-Map<int,Map<String, dynamic>> newIdenticalMap(Map<int, Map<String,dynamic>> map) {
-  Map<int,Map<String, dynamic>> newMap = Map();
+/// Returns a new identical Map independent from the old [map].
+Map<int, Map<String, dynamic>> newIdenticalMap(
+    Map<int, Map<String, dynamic>> map) {
+  Map<int, Map<String, dynamic>> newMap = Map();
   map.forEach((key, info) {
     newMap[key] = Map.from(info);
   });

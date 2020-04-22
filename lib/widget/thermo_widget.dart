@@ -16,11 +16,18 @@ class TempSlider extends StatefulWidget {
   /// Max value is 300.
   final int divisions;
 
-  /// Map<int, string> where int is tha value in which the handler #i is positioned
-  /// and the other map is <propertyName, value>
-  /// - temperature => int
-  /// - color => Color
-  final Map<int, Map<String, dynamic>> handlerValues;
+  /// Map containing updated values about day configuration.
+  ///
+  /// each handlerValues[i] returns a Map<String, dynamic> where:
+  /// MANDATORY values
+  /// 'value': int => returns int value which represents the handler
+  /// position on the crown.
+  /// 'temp': String => returns the String T0,T1,T2,T3 which represents the
+  /// temperature set in this section from this handler to the next one.
+  /// OPTIONAL values
+  /// 'icon': Icons => icon to display for the section.
+  /// 'color': Color => color used for the section.
+  final Map<int, Map<String, dynamic>> initialHandlerValues;
 
   /// The number of primary sectors to be painted.
   final int primarySectors;
@@ -61,12 +68,10 @@ class TempSlider extends StatefulWidget {
   /// Color of the handlers.
   final Color handlerColor;
 
-  /// Function called when at least one of firstValue,secondValue,thirdValue,fourthValue changes.
-  /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
+  /// Function called when at least one of the handler positions changes.
   final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionChange;
 
-  /// Function called when the user stop changing firstValue,secondValue,thirdValue,fourthValue values.
-  /// (int firstValue, int secondValue, int thirdValue, int fourthValue) => void
+  /// Function called when the user stop changing handler positions.
   final SelectionChanged<Map<int, Map<String, dynamic>>> onSelectionEnd;
 
   /// Radius of the outter circle of the handler.
@@ -75,10 +80,9 @@ class TempSlider extends StatefulWidget {
   /// Stroke width for the slider.
   final double sliderStrokeWidth;
 
-
   TempSlider(
       this.divisions,
-      this.handlerValues, {
+      this.initialHandlerValues, {
         this.height,
         this.width,
         this.child,
@@ -96,22 +100,32 @@ class TempSlider extends StatefulWidget {
         this.onSelectionEnd,
         this.handlerOutterRadius,
         this.sliderStrokeWidth,
-      })  : assert(divisions >= 0 && divisions <= 300,
-        'divisions has to be >= 0 and <= 300');
+      }) : assert(divisions >= 0 && divisions <= 300,
+  'divisions has to be >= 0 and <= 300');
 
   @override
   _TempSliderState createState() => _TempSliderState();
 }
 
 class _TempSliderState extends State<TempSlider> {
-
+  /// Map containing updated values about day configuration.
+  ///
+  /// each handlerValues[i] returns a Map<String, dynamic> where:
+  /// MANDATORY values
+  /// 'value': int => returns int value which represents the handler
+  /// position on the crown.
+  /// 'temp': String => returns the String T0,T1,T2,T3 which represents the
+  /// temperature set in this section from this handler to the next one.
+  /// OPTIONAL values
+  /// 'icon': Icons => icon to display for the section.
+  /// 'color': Color => color used for the section.
   Map<int, Map<String, dynamic>> _handlerValues;
 
   /// Set the initial state of the widget.
   @override
   void initState() {
     super.initState();
-    _handlerValues = newIdenticalMap(widget.handlerValues);
+    _handlerValues = newIdenticalMap(widget.initialHandlerValues);
   }
 
   @override
@@ -131,7 +145,8 @@ class _TempSliderState extends State<TempSlider> {
               widget.onSelectionChange(newMap);
             }
             setState(() {
-              // Updates the widget values.
+              // Updates handlers' value making the widget rebuilding and the
+              // slider painter repainting the sections and handlers.
               _handlerValues = newMap;
             });
           },

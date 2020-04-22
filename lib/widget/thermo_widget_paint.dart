@@ -15,6 +15,17 @@ class CircularSliderPaint extends StatefulWidget {
   /// Number of primary sectors in which the slider is divided(lines used to represent 15 minutes).
   final int secondarySectors;
 
+  /// Map containing updated values about day configuration.
+  ///
+  /// each handlerValues[i] returns a Map<String, dynamic> where:
+  /// MANDATORY values
+  /// 'value': int => returns int value which represents the handler
+  /// position on the crown.
+  /// 'temp': String => returns the String T0,T1,T2,T3 which represents the
+  /// temperature set in this section from this handler to the next one.
+  /// OPTIONAL values
+  /// 'icon': Icons => icon to display for the section.
+  /// 'color': Color => color used for the section.
   final Map<int, Map<String, dynamic>> handlerValues;
 
   /// Callback to be used when the user moves one of the handler or a section. It provides new Handlers' values.
@@ -44,11 +55,12 @@ class CircularSliderPaint extends StatefulWidget {
   /// Width of the stroke which draws the circle.
   final double sliderStrokeWidth;
 
-
   List<int> get intPositions {
     // Creates a fixed-length list.
     List<int> values = List<int>(handlerValues.length);
-    handlerValues.forEach((handlerNumber, info) => values[handlerNumber] = info['value']);
+    // Insert handler #i value in its relative position inside the list.
+    handlerValues.forEach(
+            (handlerNumber, info) => values[handlerNumber] = info['value']);
     return values;
   }
 
@@ -87,40 +99,40 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   /// handler #(i+1) % _sweepAngles.length
   List<double> _sweepAngles;
 
-
   /// In case we want to move the whole selection by clicking in the slider
   /// this will capture the position in the selection relative to the initial
   /// handler, that way we will be able to keep the selection constant when moving.
   int _differenceFromInitPoint;
 
   /// Used in handlePan() to know if we are moving a handler or an entire section.
-  bool get isBothHandlersSelected {
-    for (int i = 0; i < isHandlerSelected.length; i++) {
-      if (isHandlerSelected[i] &&
-          isHandlerSelected[(i + 1) % isHandlerSelected.length]) return true;
+  bool get _isBothHandlersSelected {
+    for (int i = 0; i < _isHandlerSelected.length; i++) {
+      if (_isHandlerSelected[i] &&
+          _isHandlerSelected[(i + 1) % _isHandlerSelected.length]) return true;
     }
     return false;
   }
 
   /// Used in onPanDown() to check if the user is clicking in a section.
-  bool get isNoHandlerSelected {
-    for (bool handlerSelected in isHandlerSelected) {
+  bool get _isNoHandlerSelected {
+    for (bool handlerSelected in _isHandlerSelected) {
       if (handlerSelected) return false;
     }
     return true;
   }
 
-  List<bool> isHandlerSelected = [];
+  /// Keeps info aboutt if handler #i is selected.
+  List<bool> _isHandlerSelected = [];
 
   @override
   void initState() {
     super.initState();
     for (int i = 0; i < widget.handlerValues.length; i++) {
-      isHandlerSelected.add(false);
+      _isHandlerSelected.add(false);
     }
     // Creates a non-fixed length list.
     List<int> initOrder = [];
-    for(int i = 0; i < widget.handlerValues.length; i++){
+    for (int i = 0; i < widget.handlerValues.length; i++) {
       initOrder.add(widget.handlerValues.length - (i + 1));
     }
     _calculatePaintData(null, initOrder);
@@ -143,8 +155,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     super.didUpdateWidget(oldWidget);
     // Any widget can be updated thousands of time with no change so to modify it
     // we need to check if there are changes.
-    List<int> oldValues = oldWidget.intPositions;
-    _calculatePaintData(oldValues, _painter.printingOrder);
+    _calculatePaintData(oldWidget.intPositions, _painter.printingOrder);
   }
 
   @override
@@ -153,13 +164,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     return RawGestureDetector(
       gestures: <Type, GestureRecognizerFactory>{
         CustomPanGestureRecognizer:
-            GestureRecognizerFactoryWithHandlers<CustomPanGestureRecognizer>(
-          () => CustomPanGestureRecognizer(
+        GestureRecognizerFactoryWithHandlers<CustomPanGestureRecognizer>(
+              () => CustomPanGestureRecognizer(
             onPanDown: _onPanDown,
             onPanUpdate: _onPanUpdate,
             onPanEnd: _onPanEnd,
           ),
-          (CustomPanGestureRecognizer instance) {},
+              (CustomPanGestureRecognizer instance) {},
         ),
       },
       child: CustomPaint(
@@ -180,13 +191,6 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     );
   }
 
-  bool areAllDifferentValues(List<int> oldValues, List<int> newValues){
-    for(int i = 0; i < oldValues.length; i++) {
-      if(oldValues[i] == newValues[i]) return false;
-    }
-    return true;
-  }
-
   /// Calculates all the new handlers and sweep angles' values and paints handlers.
   ///
   /// [oldValues] List containing old values of the handlers.
@@ -195,10 +199,13 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     List<int> printingOrder = oldOrder;
     List<int> intPositions = widget.intPositions;
 
-    if(!isBothHandlersSelected){
+    if (!_isBothHandlersSelected) {
+      // The user is not moving all the crown.
       // Change the printing order.
-      for(int i = 0; i < isHandlerSelected.length; i++) {
-        if(isHandlerSelected[i]) {
+      for (int i = 0; i < _isHandlerSelected.length; i++) {
+        if (_isHandlerSelected[i]) {
+          // We found the handler which is being used by the user, so we put it
+          // for last in the printing order so it will be displayed foreground.
           printingOrder.remove(i);
           printingOrder.add(i);
           break;
@@ -206,14 +213,15 @@ class _CircularSliderState extends State<CircularSliderPaint> {
       }
     }
 
-    // Reset angles coordinates and sweep angles.
+    // Resets angles coordinates and sweep angles.
     _angles = [];
     _sweepAngles = [];
     // Calculates angles coordinates.
-    for(int i = 0; i < intPositions.length; i++) {
+    for (int i = 0; i < intPositions.length; i++) {
       // Converts int position into percentage position for handler #i and the next one.
       double percent = valueToPercentage(intPositions[i], widget.divisions);
-      double nextPercent = valueToPercentage(intPositions[(i + 1) % intPositions.length], widget.divisions);
+      double nextPercent = valueToPercentage(
+          intPositions[(i + 1) % intPositions.length], widget.divisions);
       // Calculates the sweep angle using percentages.
       double sweep = getSweepAngle(percent, nextPercent);
       // Adds the angle #i coordinate.
@@ -222,7 +230,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
       _sweepAngles.add(percentageToRadians(sweep.abs()));
     }
 
-    // Creates the slider painter that will paints handlers.
+    // Creates the slider painter that will paint handlers.
     _painter = SliderPainter(
       angles: _angles,
       sweepAngles: _sweepAngles,
@@ -239,7 +247,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
   ///
   /// [details] Coordinates of the pan.
   void _onPanUpdate(Offset details) {
-    if (isNoHandlerSelected) {
+    if (_isNoHandlerSelected) {
       // No handler is selected so the pan interaction is trash.
       return;
     }
@@ -258,8 +266,8 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     // Handles the last pan interaction.
     _handlePan(details, true);
     // Handlers are no longer selected.
-    for(int i = 0; i < isHandlerSelected.length; i++){
-      isHandlerSelected[i] = false;
+    for (int i = 0; i < _isHandlerSelected.length; i++) {
+      _isHandlerSelected[i] = false;
     }
   }
 
@@ -280,26 +288,28 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     // Old handler positions.
     List<int> intPositions = widget.intPositions;
 
-    if (isBothHandlersSelected) {
-
-      int newHandlerValue = (newValue - _differenceFromInitPoint) % widget.divisions;
-
+    if (_isBothHandlersSelected) {
+      // The user is moving the crown.
+      int newHandlerValue =
+          (newValue - _differenceFromInitPoint) % widget.divisions;
 
       // The user is dragging a section between two handlers.
-      for(int i = 0; i < isHandlerSelected.length; i++) {
-        if(isHandlerSelected[i] && isHandlerSelected[(i + 1) % isHandlerSelected.length]) {
+      for (int i = 0; i < _isHandlerSelected.length; i++) {
+        if (_isHandlerSelected[i] &&
+            _isHandlerSelected[(i + 1) % _isHandlerSelected.length]) {
           if (isPanEnd) {
             // We invoke onSelectionEnd with the same values because
             // newFirstValue != widget.firstValue) is always false, this due to the fact
             // that values were update by the before handlePan call.
             widget.onSelectionEnd(widget.handlerValues);
-          } else if(newHandlerValue != intPositions[i]) {
+          } else if (newHandlerValue != intPositions[i]) {
             // Handler is in a different position so update handler values.
             int diff = newHandlerValue - intPositions[i];
             var newMap = widget.handlerValues;
-            newMap.forEach((handlerNumber, info){
+            newMap.forEach((handlerNumber, info) {
               // Updates all handler values.
-              newMap[handlerNumber]['value'] = (newMap[handlerNumber]['value'] + diff) % widget.divisions;
+              newMap[handlerNumber]['value'] =
+                  (newMap[handlerNumber]['value'] + diff) % widget.divisions;
             });
             // Invokes callback with new handler values.
             widget.onSelectionChange(newMap);
@@ -311,10 +321,11 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     }
 
     // Only one handler is selected.
-    for(int i = 0; i < isHandlerSelected.length; i++) {
-      if(isHandlerSelected[i]) {
+    for (int i = 0; i < _isHandlerSelected.length; i++) {
+      if (_isHandlerSelected[i]) {
         // Handler #i is selected.
-        if(!_isInRange(newValue, intPositions[(i - 1) % intPositions.length], intPositions[(i + 1) % intPositions.length] )){
+        if (!_isInRange(newValue, intPositions[(i - 1) % intPositions.length],
+            intPositions[(i + 1) % intPositions.length])) {
           // If newValue is not allowed for handler #i resets its previous value.
           newValue = intPositions[i];
         }
@@ -360,20 +371,26 @@ class _CircularSliderState extends State<CircularSliderPaint> {
     }
     // Checks if the user selected one of the handler.
     int minimumDistancePos = 0;
-    double minimumDistance = distanceBetweenPoints(position, _painter.handlerCenterOffsets[0]);
-    for(int i = 1; i < _painter.handlerCenterOffsets.length; i++) {
-      if(distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]) < minimumDistance) {
-        minimumDistance = distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]);
+    double minimumDistance =
+    distanceBetweenPoints(position, _painter.handlerCenterOffsets[0]);
+    for (int i = 1; i < _painter.handlerCenterOffsets.length; i++) {
+      if (distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]) <
+          minimumDistance) {
+        minimumDistance =
+            distanceBetweenPoints(position, _painter.handlerCenterOffsets[i]);
         minimumDistancePos = i;
       }
     }
     // We know which handler has the minimum distance from tap event.
-    if(isPointInsideCircle(position, _painter.handlerCenterOffsets[minimumDistancePos], widget.handlerOutterRadius)) {
+    if (isPointInsideCircle(
+        position,
+        _painter.handlerCenterOffsets[minimumDistancePos],
+        widget.handlerOutterRadius)) {
       // Handler #minimumDistancePos is selected.
-      isHandlerSelected[minimumDistancePos] = true;
+      _isHandlerSelected[minimumDistancePos] = true;
     }
 
-    if(isNoHandlerSelected) {
+    if (_isNoHandlerSelected) {
       // Check if the user has clicked in one of the sections included between
       // two handler, so we need to move all the sections.
       if (isPointAlongCircle(position, _painter.center, _painter.radius,
@@ -381,11 +398,12 @@ class _CircularSliderState extends State<CircularSliderPaint> {
         // The point in which the user tapped is a valid point inside the circular crown.
         var angle = coordinatesToRadians(_painter.center, position);
         var positionPercentage = radiansToPercentage(angle);
-        for(int i = 0; i < _angles.length; i++) {
-          if (isAngleInsideRadiansSelection(angle, _angles[i], _sweepAngles[i])) {
+        for (int i = 0; i < _angles.length; i++) {
+          if (isAngleInsideRadiansSelection(
+              angle, _angles[i], _sweepAngles[i])) {
             // The section between handler #i and handler #i+1 has been selected.
-            isHandlerSelected[i] = true;
-            isHandlerSelected[(i + 1) % isHandlerSelected.length] = true;
+            _isHandlerSelected[i] = true;
+            _isHandlerSelected[(i + 1) % _isHandlerSelected.length] = true;
             // No need to account for negative values, that will be sorted out in the onPanUpdate.
             _differenceFromInitPoint =
                 percentageToValue(positionPercentage, widget.divisions) -
@@ -396,7 +414,7 @@ class _CircularSliderState extends State<CircularSliderPaint> {
       }
     }
     // Returns true if at least one of the handler has been selected.
-    for(bool selected in isHandlerSelected) {
+    for (bool selected in _isHandlerSelected) {
       if (selected) return true;
     }
     return false;

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:thermo_widget/widget/thermo_widget_paint.dart';
 
 import 'utils.dart';
 
@@ -38,6 +37,7 @@ class SliderPainter extends CustomPainter {
 
   /// Handlers coordinate on the slider.
   List<Offset> handlerOffsets;
+
   /// Coordinates of the center of each handler.
   List<Offset> handlerCenterOffsets;
 
@@ -52,6 +52,7 @@ class SliderPainter extends CustomPainter {
   /// handler #(i+1) % _sweepAngles.length
   List<double> sweepAngles;
 
+  /// Map containing default color for each temperature.
   Map<String, Color> defaultColors = {
     'T0': Colors.redAccent,
     'T1': Colors.brown[400],
@@ -59,6 +60,7 @@ class SliderPainter extends CustomPainter {
     'T3': Colors.amber,
   };
 
+  /// Map containing default icon for each temperature.
   Map<String, IconData> defaultIcons = {
     'T0': Icons.ac_unit,
     'T1': Icons.brightness_3,
@@ -199,7 +201,8 @@ class SliderPainter extends CustomPainter {
     // Draws the handler.
     canvas.drawCircle(handlerCenterOffsets[number], handlerRadius, handler);
     // Draws the handler outter circle.
-    canvas.drawCircle(handlerCenterOffsets[number], handlerOutterRadius, handlerOutter);
+    canvas.drawCircle(
+        handlerCenterOffsets[number], handlerOutterRadius, handlerOutter);
     // We need to move the time on the right and on the left to center it in the handler.
     adjustment =
     formatTime(handlerValues[number]['value']).length == 4 ? 2.0 : -2.0;
