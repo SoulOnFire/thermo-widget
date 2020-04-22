@@ -317,7 +317,7 @@ class _WidgetPageState extends State<WidgetPage> {
     setState(() {
       handlerValues = newIdenticalMap(newMap);
       // TODO: eliminare print.
-      print(handlerValues);
+      //print(handlerValues);
     });
   }
 

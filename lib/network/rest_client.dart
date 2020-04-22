@@ -104,9 +104,10 @@ Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
   for(int i = 0; i < sections.length; i++) {
     dayMap[i] = sections[i];
   }
-  dayMap.forEach((key, info) {
+  // TODO: eliminare dopo test.
+  /*dayMap.forEach((key, info) {
     print('$key: ${formatTime(info['value'])}');
-  });
+  });*/
   return dayMap;
 }
 
@@ -222,7 +223,19 @@ class RestApiHelper {
       String binaryDay, int dayNumber, String season) async {
     // Converts the configuration into hexadecimal string.
     String hexDay = _binaryToHex(binaryDay);
+    // TODO: eliminare dopo testing
     print('Sending day: $hexDay');
+    Map expectedPositions = _getTimes(binaryDay);
+    print('Test con binary:');
+    expectedPositions.forEach((handlerNumber, info) {
+      print('#$handlerNumber : ${formatTime(info['value'])}');
+    });
+    expectedPositions = _getTimes(_hexToBinary(hexDay));
+    print('Test con hex:');
+    expectedPositions.forEach((handlerNumber, info) {
+      print('#$handlerNumber : ${formatTime(info['value'])}');
+    });
+
     // Gets token and keycode.
     String token = await _getToken();
     String keycode = await _getKeyCode();
@@ -254,14 +267,19 @@ class RestApiHelper {
     print('Day received: ${weekConf['day$dayNumber'] as String}');
     print('Day received: ${_hexToBinary(weekConf['day$dayNumber'] as String)}');
     Map<int, Map<String, dynamic>> expectedPositions =
-    getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));*/
+    _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+    expectedPositions.forEach((handlerNumber, info) {
+      print('#$handlerNumber : ${formatTime(info['value'])}');
+    });
+     ---- For local testing */
     String testString = '101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101001010101010101010101010101010101010101010101010110101010101010101010101010';
     Map<int, Map<String, dynamic>> expectedPositions = _getTimes(testString);
     expectedPositions.forEach((key, info) {
       print('$key: ${formatTime(info['value'])}');
     });
     return expectedPositions;
+
      // Converts the configuration into binary and sent back to the caller.
-   // return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+  // return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 }
