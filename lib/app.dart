@@ -176,6 +176,57 @@ class _WidgetPageState extends State<WidgetPage> {
   /// 'icon': Icons => icon to display for the section.
   /// 'color': Color => color used for the section.
   Map<int, Map<String, dynamic>> handlerValues = Map();
+  /*{   // No lunch example
+    // Initial values for test
+    0: {
+      'value': 24,
+      'color': Colors.brown,
+      'temp': 'T3',
+    },
+    1: {
+      'value': 32,
+      'color': Colors.amber,
+      'temp': 'T2',
+    },
+    2: {
+      'value': 64,
+      'color': Colors.deepPurple,
+      'temp': 'T3',
+    },
+    3: {
+      'value': 88,
+      'color': Colors.green,
+      'temp': 'T1',
+    }
+  };*/
+  /*{ // Lunch example
+    // Initial values for test
+    0: {
+      'value': 24,
+      'temp': 'T3',
+    },
+    1: {
+      'value': 32,
+      'temp': 'T2',
+    },
+    2: {
+      'value': 48,
+      'temp': 'T3',
+    },
+    3: {
+      'value': 53,
+      'temp': 'T2',
+    },
+    4: {
+      'value': 64,
+      'temp': 'T3',
+    },
+    5: {
+      'value': 88,
+      'temp': 'T1',
+    }
+  };*/
+
 
   @override
   void initState() {
@@ -245,6 +296,7 @@ class _WidgetPageState extends State<WidgetPage> {
                       96,
                       // Initial handlers' values loaded from the server.
                       snapshot.data,
+                      //handlerValues, //offline examples
                       height: widget.height,
                       width: widget.width,
                       primarySectors: 24,
@@ -316,8 +368,6 @@ class _WidgetPageState extends State<WidgetPage> {
     // Updates the state and makes the widget re-building.
     setState(() {
       handlerValues = newIdenticalMap(newMap);
-      // TODO: eliminare print.
-      //print(handlerValues);
     });
   }
 
@@ -330,7 +380,7 @@ class _WidgetPageState extends State<WidgetPage> {
     String binaryDay = _calculatesBinaryDay(newMap);
     print('Sending string: $binaryDay\nLength: ${binaryDay.length}');
     // Send changes to the server.
-    //RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
+    RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
     setState(() {
       handlerValues = newIdenticalMap(newMap);

@@ -146,7 +146,7 @@ class RestApiHelper {
         'Basic ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTc6OGRjMTA3Zjc5NWQzNTRhODczYzdjOTlmYzVjZDc0ZDQ4ZmQ0NjhjMzU5MTM0ZGI1ZTg1MTk5YTg4ZGRjM2MzZmIwN2U4MmFhN2ZhY2U3NjhlOTc5MmMzMzU4YTQwMjBiMGM1YWI4MGQ1ZDZjNjViMTQ4MGMzNWJkMWJlN2JhYmFiMTFkZjhmODE0M2I0MTg2NmQ2ZmE5YWFmMjdkMTAxZjg5NmEzMmRhZTFjOTY2YWJhYWJlOGE0Mzk0NTYzZDFhOTc2NzRhYzI2OGNkOTA5ZmIzOGRkMGUxODE5NTBjNzJhNWJlMmE2N2FkODA0MWZkYjgwNjJiMmFmN2Y3MWE1Mg==',
         'Content-Type': 'application/x-www-form-urlencoded'
       }, body: {
-        'username': 'user.cameconnect',
+        'username': 'candreola.ios',
         'password': 'cameRD2019',
         'grant_type': 'password',
       });
@@ -233,7 +233,7 @@ class RestApiHelper {
     expectedPositions = _getTimes(_hexToBinary(hexDay));
     print('Test con hex:');
     expectedPositions.forEach((handlerNumber, info) {
-      print('#$handlerNumber : ${formatTime(info['value'])}');
+      print('#$handlerNumber : ${formatTime(info['value'])} ${info['temp']}');
     });
 
     // Gets token and keycode.
@@ -260,7 +260,7 @@ class RestApiHelper {
   /// Returns the temperature configuration for the desired [dayNumber] in
   /// binary format in [season].
   static Future<Map<int, Map<String, dynamic>>> getDayConfig(int dayNumber, String season) async {
-    /*List<dynamic> devicesList = await getDevices();
+    List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;
     Map<String, dynamic> weekConf = firstDevInfo[season];
     // TODO: eliminare dopo testing.
@@ -271,15 +271,15 @@ class RestApiHelper {
     expectedPositions.forEach((handlerNumber, info) {
       print('#$handlerNumber : ${formatTime(info['value'])}');
     });
-     ---- For local testing */
+    /* ---  For local testing
     String testString = '101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101001010101010101010101010101010101010101010101010110101010101010101010101010';
     Map<int, Map<String, dynamic>> expectedPositions = _getTimes(testString);
     expectedPositions.forEach((key, info) {
       print('$key: ${formatTime(info['value'])}');
     });
     return expectedPositions;
-
+  --- */
      // Converts the configuration into binary and sent back to the caller.
-  // return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+   return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 }
