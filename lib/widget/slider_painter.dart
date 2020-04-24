@@ -114,6 +114,10 @@ class SliderPainter extends CustomPainter {
   /// [number] = 4 => prints the icon in the section between handler #4 and handler #1.
   void _paintIcon(Canvas canvas, int number) {
     double adj = 3.0;
+
+    Paint iconPaint = Paint()
+      ..color = Colors.white;
+
     TextPainter textPainter = TextPainter(
         textDirection: TextDirection.ltr, textAlign: TextAlign.center);
     // Dimension of the icons.
@@ -125,12 +129,12 @@ class SliderPainter extends CustomPainter {
     pos = Offset(pos.dx - sliderStrokeWidth / 3 - adj,
         pos.dy - sliderStrokeWidth / 3 - adj);
     // Icon.
-    var icon = handlerValues[number]['icon'] ??
+    IconData icon = handlerValues[number]['icon'] ??
         defaultIcons[handlerValues[number]['temp']];
     // TextPainter settings.
     textPainter.text = TextSpan(
         text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(fontSize: iconDim, fontFamily: icon.fontFamily));
+        style: TextStyle(fontSize: iconDim, fontFamily: icon.fontFamily, foreground: iconPaint));
     // Calculates the distance between handler #number and the next one.
     var distance = _distanceHandlerValues(handlerValues[number]['value'],
         handlerValues[(number + 1) % handlerValues.length]['value']);
@@ -148,7 +152,8 @@ class SliderPainter extends CustomPainter {
             text: String.fromCharCode(icon.codePoint),
             style: TextStyle(
                 fontSize: iconDim * (distance / 5),
-                fontFamily: icon.fontFamily));
+                fontFamily: icon.fontFamily,
+                foreground: iconPaint));
       } else
         return; // Don't print the icon, too little space.
     }
