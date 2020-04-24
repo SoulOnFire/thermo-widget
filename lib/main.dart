@@ -179,9 +179,8 @@ class _WidgetPageState extends State<WidgetPage> {
   /// OPTIONAL values
   /// 'icon': Icons => icon to display for the section.
   /// 'color': Color => color used for the section.
-  Map<int, Map<String, dynamic>> handlerValues = Map();
-
-  /*{   // No lunch example
+  Map<int, Map<String, dynamic>> handlerValues = // Map();
+  {   // No lunch example
     // Initial values for test
     0: {
       'value': 24,
@@ -203,7 +202,7 @@ class _WidgetPageState extends State<WidgetPage> {
       'color': Colors.green,
       'temp': 'T1',
     }
-  };*/
+  };
   /*{ // Lunch example
     // Initial values for test
     0: {
@@ -270,7 +269,7 @@ class _WidgetPageState extends State<WidgetPage> {
       appBar: AppBar(
         title: Text('Your day configuration'),
       ),
-      body: FutureBuilder<Map<int, Map<String, dynamic>>>(
+      body: /*FutureBuilder<Map<int, Map<String, dynamic>>>(
         future: _dayFuture,
         builder: (BuildContext context,
             AsyncSnapshot<Map<int, Map<String, dynamic>>> snapshot) {
@@ -343,8 +342,8 @@ class _WidgetPageState extends State<WidgetPage> {
           }
         },
       ),
-    );
-    /*Container(
+    );*/
+    Container(
         decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment.center,
@@ -380,7 +379,8 @@ class _WidgetPageState extends State<WidgetPage> {
                 ),
               )),
         ),
-      ) */
+      )
+    );
   }
 
   /// Checks if oldMap[i]['value'] is equal to newMap[i]['value'] for each i.

@@ -8,27 +8,64 @@ Flutter project containing the new Thermo widget and demo app.
 
 ## Constructor
 
-| Parameter | Default  |                                                                        Description                                                                                         |
-| --------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| divisions | required | Number of sectors in which the slider is divided(# of possible values on the slider), max value is 300.                                                                    |
-| firstValue | required | Initial value in which is located first handler                                                                                                                           |
-| secondValue | required | Initial value in which is located second handler                                                                                                                         |
-| thirdValue | required | Initial value in which is located third handler                                                                                                                           | 
-| fourthValue | required | Initial value in which is located fourth handler                                                                                                                         |
-| height | 300.0 | Height of the canvas where the slider is rendered                                                                                                                                |
-| width | 300.0 | Width of the canvas where the slider is rendered                                                                                                                                  |
-| child | null | An optional widget that will be inserted inside the slider                                                                                                                         |
-| primarySectors | 0 | The number of primary sectors to be painted, they will be painted using hoursColor                                                                                           |
-| secondarySectors | 0 | The number of secondary sectors to be painted, they will be painted using minutesColor                                                                                     |
-| baseColor | Color.fromRGBO(255, 255, 255, 0.1) | Color of the base circle                                                                                                                         |
-| hoursColor| Color.fromRGBO(255, 255, 255, 0.3) | Color of lines which represent hours(primarySectors )                                                                                            |
-| minutesColor | Colors.white30 | Color of lines which represent minutes(secondarySectors)                                                                                                          |
-| section12Color | Colors.amber | Color of the section between handler #1 and handler #2.                                                                                                           |
-| section23Color | Colors.blue | Color of the section between handler #2 and handler #3                                                                                                             |
-| section34Color | Colors.deepPurpleAccent | Color of the section between handler #3 and handler #4                                                                                                 |
-| section41Color | Colors.brown | Color of the section between handler #4 and handler #1                                                                                                            |
-| handlerColor | Colors.white | Color of the handlers                                                                                                                                               |
-| onSelectionChange | void onSelectionChange(int newFirst,int newSecond,int newThird,int newForth) | Function called when at least one of firstValue,secondValue,thirdValue,fourthValue changes     |
-| onSelectionEnd | void onSelectionEnd(int newFirst,int newSecond,int newThird,int newForth) | Function called when the user stop changing firstValue,secondValue,thirdValue,fourthValue values     |
-| handlerOutterRadius | 22.0 | Radius of the outter circle of the handler |
-| sliderStrokeWidth | 28.0 | Stroke width for the slider |
+| Parameter |   Default   | Description |
+| - | - | - |
+
+
+## Adding Flutter Web to an existing flutter app.
+
+For adding web support to an existing app we need to run these commands:
+```
+ flutter channel beta
+ flutter upgrade
+ flutter config --enable-web
+```
+Then check that Chrome is ready:
+```
+flutter devices
+```
+**Restart your IDE** and go to the project root folder, run:
+```
+flutter create .
+```
+To serve your app from localhost in Chrome, enter the following from the top of the package:
+```
+flutter run -d chrome
+```
+
+### Build web
+Run the following command to generate a release build:
+```
+flutter build web
+```
+A release build uses dart2js (instead of the development compiler) to produce a single JavaScript 
+file main.dart.js. You can create a release build using release mode (flutter run --release) or by
+using flutter build web. This populates a build/web directory with built files, including an assets
+directory, which need to be served together.
+
+### Run web
+Launch a web server (for example, python -m SimpleHTTPServer 8000, or by using the dhttpd package),
+and open the /build/web directory. Navigate to localhost:8000 in your browser (given the python
+SimpleHTTPServer example) to view the release version of your app.
+
+#### Run with dhttpd web server
+Install dhttpd with the following command:
+```
+flutter pub global activate dhttpd
+```
+Go to build */build/web* directory and run:
+```
+flutter pub global run dhttpd
+```
+Open your browser and navigate to **http://localhost:8080**
+
+#### Embedding a Flutter app into an HTML page
+You can embed a Flutter web app, as you would embed other content, in an iframe tag of an HTML file.
+Change /build/web/index.html name. Create a new index.html with the iframe tag reporting as url the
+url of the old index.html.
+In the following example, replace “URL” with the location of your HTML page:
+```
+<iframe src="URL"></iframe>
+```
+
+

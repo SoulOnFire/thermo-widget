@@ -136,6 +136,7 @@ class RestApiHelper {
       DateTime expiryDate = DateTime.parse(sharedPref.getString('expiry_date'));
       if (expiryDate.isAfter(DateTime.now())) {
         print("Shared preference token used");
+        print(sharedPref.getString('token'));
         return sharedPref.getString('token');
       }
     }
@@ -160,6 +161,7 @@ class RestApiHelper {
               .toString());
       // Returns the received token.
       print('New token used');
+      sharedPref.getString('token');
       return jsonMap['access_token'] as String;
     } on SocketException {
       throw FetchDataException('No internet connection');
