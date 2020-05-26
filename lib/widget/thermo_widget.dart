@@ -53,18 +53,6 @@ class TempSlider extends StatefulWidget {
   /// Color of lines which represent minutes(secondarySectors).
   final Color minutesColor;
 
-  /// Color of the section between handler #1 and handler #2.
-  final Color section12Color;
-
-  /// Color of the section between handler #2 and handler #3.
-  final Color section23Color;
-
-  /// Color of the section between handler #3 and handler #4.
-  final Color section34Color;
-
-  /// Color of the section between handler #4 and handler #1.
-  final Color section41Color;
-
   /// Color of the handlers.
   final Color handlerColor;
 
@@ -91,10 +79,6 @@ class TempSlider extends StatefulWidget {
         this.baseColor,
         this.hoursColor,
         this.minutesColor,
-        this.section12Color,
-        this.section23Color,
-        this.section34Color,
-        this.section41Color,
         this.handlerColor,
         this.onSelectionChange,
         this.onSelectionEnd,
