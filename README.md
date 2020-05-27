@@ -9,6 +9,7 @@ Flutter project containing Thermo widget and demo app.
 ## Constructor
 
 | Parameter |   Default   | Description |
+|----------|:-------------:|------:|
 | divisions | required | Number of sectors in which the slider is divided(# of possible values on the slider) |
 | initialHandlerValues | required | Map containing information about day configuration |
 | height | 300.0 | Height of the canvas where the widget is rendered |
