@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:thermo_widget/widget/utils.dart';
 
 import 'network_exceptions.dart';
 
@@ -47,17 +46,18 @@ String _binaryToHex(String binaryString) {
 /// [2] => handler #3 position
 /// [3] => handler #4 position.
 Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
-
   List<Map<String, dynamic>> sections = [];
   for (int i = 0; i <= binaryString.length - 2; i += 2) {
     // A quarter of hour is represented by two binary digits.
     // substring() returns a string with the digits from position i to i + 2 - 1.
     String quarter = binaryString.substring(i, i + 2);
     switch (quarter) {
-      case '00':  // T0
-        if(sections.isEmpty && binaryString.substring(
-            binaryString.length - 2, binaryString.length) !=
-            quarter || sections.isNotEmpty && sections.last['temp'] != 'T0') {
+      case '00': // T0
+        if (sections.isEmpty &&
+            binaryString.substring(
+                binaryString.length - 2, binaryString.length) !=
+                quarter ||
+            sections.isNotEmpty && sections.last['temp'] != 'T0') {
           // Creates a new section.
           sections.add({
             'value': i ~/ 2,
@@ -65,10 +65,12 @@ Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
           });
         }
         break;
-      case '01':  // T1
-        if(sections.isEmpty && binaryString.substring(
-            binaryString.length - 2, binaryString.length) !=
-            quarter || sections.isNotEmpty && sections.last['temp'] != 'T1') {
+      case '01': // T1
+        if (sections.isEmpty &&
+            binaryString.substring(
+                binaryString.length - 2, binaryString.length) !=
+                quarter ||
+            sections.isNotEmpty && sections.last['temp'] != 'T1') {
           // Creates a new section.
           sections.add({
             'value': i ~/ 2,
@@ -76,10 +78,12 @@ Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
           });
         }
         break;
-      case '10':  // T2
-        if(sections.isEmpty && binaryString.substring(
-            binaryString.length - 2, binaryString.length) !=
-            quarter || sections.isNotEmpty && sections.last['temp'] != 'T2') {
+      case '10': // T2
+        if (sections.isEmpty &&
+            binaryString.substring(
+                binaryString.length - 2, binaryString.length) !=
+                quarter ||
+            sections.isNotEmpty && sections.last['temp'] != 'T2') {
           // Creates a new section.
           sections.add({
             'value': i ~/ 2,
@@ -87,10 +91,12 @@ Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
           });
         }
         break;
-      case '11':  // T3
-        if(sections.isEmpty && binaryString.substring(
-            binaryString.length - 2, binaryString.length) !=
-            quarter || sections.isNotEmpty && sections.last['temp'] != 'T3') {
+      case '11': // T3
+        if (sections.isEmpty &&
+            binaryString.substring(
+                binaryString.length - 2, binaryString.length) !=
+                quarter ||
+            sections.isNotEmpty && sections.last['temp'] != 'T3') {
           // Creates a new section.
           sections.add({
             'value': i ~/ 2,
@@ -101,13 +107,9 @@ Map<int, Map<String, dynamic>> _getTimes(String binaryString) {
     }
   }
   Map<int, Map<String, dynamic>> dayMap = Map<int, Map<String, dynamic>>();
-  for(int i = 0; i < sections.length; i++) {
+  for (int i = 0; i < sections.length; i++) {
     dayMap[i] = sections[i];
   }
-  // TODO: eliminare dopo test.
-  /*dayMap.forEach((key, info) {
-    print('$key: ${formatTime(info['value'])}');
-  });*/
   return dayMap;
 }
 
@@ -135,8 +137,6 @@ class RestApiHelper {
         sharedPref.getString('expiry_date') != null) {
       DateTime expiryDate = DateTime.parse(sharedPref.getString('expiry_date'));
       if (expiryDate.isAfter(DateTime.now())) {
-        print("Shared preference token used");
-        print(sharedPref.getString('token'));
         return sharedPref.getString('token');
       }
     }
@@ -160,7 +160,6 @@ class RestApiHelper {
               .add(new Duration(seconds: jsonMap['expires_in']))
               .toString());
       // Returns the received token.
-      print('New token used');
       sharedPref.getString('token');
       return jsonMap['access_token'] as String;
     } on SocketException {
@@ -182,7 +181,6 @@ class RestApiHelper {
     switch (response.statusCode) {
       case 200:
       // OK.
-      //print(json.decode(response.body));
         return json.decode(response.body);
       case 400:
       // Bad Request.
@@ -225,19 +223,6 @@ class RestApiHelper {
       String binaryDay, int dayNumber, String season) async {
     // Converts the configuration into hexadecimal string.
     String hexDay = _binaryToHex(binaryDay);
-    // TODO: eliminare dopo testing
-    print('Sending day: $hexDay');
-    Map expectedPositions = _getTimes(binaryDay);
-    print('Test con binary:');
-    expectedPositions.forEach((handlerNumber, info) {
-      print('#$handlerNumber : ${formatTime(info['value'])}');
-    });
-    expectedPositions = _getTimes(_hexToBinary(hexDay));
-    print('Test con hex:');
-    expectedPositions.forEach((handlerNumber, info) {
-      print('#$handlerNumber : ${formatTime(info['value'])} ${info['temp']}');
-    });
-
     // Gets token and keycode.
     String token = await _getToken();
     String keycode = await _getKeyCode();
@@ -252,7 +237,6 @@ class RestApiHelper {
             '$season.day$dayNumber': hexDay,
           }));
       Map<String, dynamic> bodyResponse = _returnResponse(httpResponse);
-      print('${DateTime.now().toString()} ${bodyResponse['ok']}');
       return bodyResponse['ok'] as bool;
     } on SocketException {
       throw FetchDataException('No Internet connection');
@@ -261,27 +245,12 @@ class RestApiHelper {
 
   /// Returns the temperature configuration for the desired [dayNumber] in
   /// binary format in [season].
-  static Future<Map<int, Map<String, dynamic>>> getDayConfig(int dayNumber, String season) async {
+  static Future<Map<int, Map<String, dynamic>>> getDayConfig(
+      int dayNumber, String season) async {
     List<dynamic> devicesList = await getDevices();
     Map<String, dynamic> firstDevInfo = devicesList.first['items'].first;
     Map<String, dynamic> weekConf = firstDevInfo[season];
-    // TODO: eliminare dopo testing.
-    print('Day received: ${weekConf['day$dayNumber'] as String}');
-    print('Day received: ${_hexToBinary(weekConf['day$dayNumber'] as String)}');
-    Map<int, Map<String, dynamic>> expectedPositions =
-    _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
-    expectedPositions.forEach((handlerNumber, info) {
-      print('#$handlerNumber : ${formatTime(info['value'])}');
-    });
-    /* ---  For local testing
-    String testString = '101010101010101010101011111111111111111111111111111111111111111111111110101010101010101010101010101010101010101010101001010101010101010101010101010101010101010101010110101010101010101010101010';
-    Map<int, Map<String, dynamic>> expectedPositions = _getTimes(testString);
-    expectedPositions.forEach((key, info) {
-      print('$key: ${formatTime(info['value'])}');
-    });
-    return expectedPositions;
-  --- */
-     // Converts the configuration into binary and sent back to the caller.
-   return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
+    // Converts the configuration into binary and sent back to the caller.
+    return _getTimes(_hexToBinary(weekConf['day$dayNumber'] as String));
   }
 }

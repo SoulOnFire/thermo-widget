@@ -1,6 +1,6 @@
 # thermo_widget
 
-Flutter project containing the new Thermo widget and demo app.
+Flutter project containing Thermo widget and demo app.
 
 ## Demo
 
@@ -9,8 +9,21 @@ Flutter project containing the new Thermo widget and demo app.
 ## Constructor
 
 | Parameter |   Default   | Description |
-| - | - | - |
-
+| divisions | required | Number of sectors in which the slider is divided(# of possible values on the slider) |
+| initialHandlerValues | required | Map containing information about day configuration |
+| height | 300.0 | Height of the canvas where the widget is rendered |
+| width | 300.0 | Width of the canvas where the widget is rendered |
+| child | null | Widget that will be inserted in the center of the circular slider |
+| primarySectors | 0 | Number of primary sectors to be painted on the base circular crown |
+| secondarySectors | 0 | Number of secondary sectors to be painted on the base circular crown |
+| this.baseColor | Color.fromRGBO(255, 255, 255, 0.1) | Color of the base circular crown |
+| this.hoursColor | Color.fromRGBO(255, 255, 255, 0.3) | Color of lines which represent hours(primarySectors) |
+| this.minutesColor | Colors.white30 | Color of lines which represent minutes(secondarySectors) |
+| this.handlerColor | Colors.white | Color of the handlers |
+| this.onSelectionChange | void SelectionChanged<Map<int, Map<String, dynamic>>> | Function triggered when at least one of the handler positions changes or the user moves the circular crown |
+| this.onSelectionEnd | void SelectionChanged<Map<int, Map<String, dynamic>>> | Function triggered when the user stop changing handler positions or moving the circular crown |
+| this.handlerOutterRadius | 22.0 | Radius of the outter circle of the handler |
+| this.sliderStrokeWidth | 28.0 | Stroke width for the slider |
 
 ## Adding Flutter Web to an existing flutter app.
 

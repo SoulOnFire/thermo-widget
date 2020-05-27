@@ -382,7 +382,6 @@ class _WidgetPageState extends State<WidgetPage> {
   void _updateLabelsEnd(Map<int, Map<String, dynamic>> newMap) async {
     timeToPrint = '';
     String binaryDay = _calculatesBinaryDay(newMap);
-    print('Sending string: $binaryDay\nLength: ${binaryDay.length}');
     // Send changes to the server.
     RestApiHelper.sendDayConfig(binaryDay, 1, 'winter');
     // Updates the state and makes the widget re-building.
