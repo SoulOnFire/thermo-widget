@@ -1,4 +1,4 @@
-# thermo_widget
+# thermo_widget - Bachelor's Degree thesis in Computer Science (L-31)
 
 Flutter project containing Thermo widget and demo app.
 
