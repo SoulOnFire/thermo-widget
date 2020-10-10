@@ -1,6 +1,7 @@
 # thermo_widget - Bachelor's Degree thesis in Computer Science (L-31)
 
-Flutter project containing Thermo widget and demo app.
+This is my thesis project developed in Flutter at Came SPA.
+This repository contains a running example of a mobile cross-platform mobile application containing the widget I developed during my internship.
 
 ## Demo
 
