@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_config/flutter_config.dart';
 import 'package:thermo_widget/widget/hour_painter.dart';
 
 import 'network/rest_client.dart';
@@ -10,7 +11,11 @@ final double minTemp = 4.0;
 final double maxTemp = 30.0;
 
 /// Dart entrypoint for WEB VERSION.
-void main() => runApp(MyApp());
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterConfig.loadEnvVariables();
+  runApp(MyApp());
+}
 
 /// Simple app displaying a page with the Thermo widget.
 class MyApp extends StatelessWidget {
@@ -284,7 +289,7 @@ class _WidgetPageState extends State<WidgetPage> {
             }
             // The request completed without errors.
             return Container(
-              decoration: BoxDecoration(
+              /*decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.center,
                     colors: [
@@ -293,7 +298,7 @@ class _WidgetPageState extends State<WidgetPage> {
                     ],
                     radius: 0.9,
                     stops: [0.4, 0.9],
-                  )),
+                  )),*/
               child: Center(
                 child: Container(
                     child: TempSlider(
@@ -323,7 +328,7 @@ class _WidgetPageState extends State<WidgetPage> {
           } else {
             // The request has not yet been completed.
             return Container(
-              decoration: BoxDecoration(
+              /*decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.center,
                     colors: [
@@ -332,7 +337,7 @@ class _WidgetPageState extends State<WidgetPage> {
                     ],
                     radius: 0.9,
                     stops: [0.4, 0.9],
-                  )),
+                  )),*/
               child: Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),

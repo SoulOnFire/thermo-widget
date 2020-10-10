@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_config/flutter_config.dart';
 
 import 'network_exceptions.dart';
 
@@ -140,15 +141,16 @@ class RestApiHelper {
         return sharedPref.getString('token');
       }
     }
+    print(FlutterConfig.get('USERNAME'));
     // There is not a valid token, so we need to request it.
     try {
       var httpResponse = await http.post(tokenUrl, headers: {
         'Authorization':
         'Basic ZmUyYjgwZmI1NTA5OTYxNDgwNTBmMDJmZGZjZTg0MTc6OGRjMTA3Zjc5NWQzNTRhODczYzdjOTlmYzVjZDc0ZDQ4ZmQ0NjhjMzU5MTM0ZGI1ZTg1MTk5YTg4ZGRjM2MzZmIwN2U4MmFhN2ZhY2U3NjhlOTc5MmMzMzU4YTQwMjBiMGM1YWI4MGQ1ZDZjNjViMTQ4MGMzNWJkMWJlN2JhYmFiMTFkZjhmODE0M2I0MTg2NmQ2ZmE5YWFmMjdkMTAxZjg5NmEzMmRhZTFjOTY2YWJhYWJlOGE0Mzk0NTYzZDFhOTc2NzRhYzI2OGNkOTA5ZmIzOGRkMGUxODE5NTBjNzJhNWJlMmE2N2FkODA0MWZkYjgwNjJiMmFmN2Y3MWE1Mg==',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-f\orm-urlencoded'
       }, body: {
-        'username': 'candreola.ios',
-        'password': 'cameRD2019',
+        'username': FlutterConfig.get('USERNAME'),
+        'password': FlutterConfig.get('PASSWORD'),
         'grant_type': 'password',
       });
       Map<String, dynamic> jsonMap = _returnResponse(httpResponse);
